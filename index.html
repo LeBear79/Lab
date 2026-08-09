@@ -3,58 +3,383 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Naturfag Labb v1.1</title>
+<title>Naturfag Labb v1.2</title>
 <style>
+
 :root{
-  --bg:#f4f8f7;--card:#fff;--text:#203033;--muted:#6d7b7e;--primary:#2f665f;
-  --primary-soft:#e5f1ee;--border:#dfe7e5;--shadow:0 8px 24px rgba(20,55,50,.07);
-  --danger:#9a3b36;--danger-soft:#f8e9e7;--warn:#a96c12;--warn-soft:#fff2dc
+  --bg:#f3f7f5;
+  --surface:#ffffff;
+  --surface-soft:#f8fbf9;
+  --text:#1f312d;
+  --muted:#72807c;
+  --primary:#2f685d;
+  --primary-dark:#25564d;
+  --primary-soft:#e6f1ed;
+  --accent:#d8ebe4;
+  --border:#dce6e2;
+  --shadow:0 10px 30px rgba(33,73,63,.08);
+  --shadow-soft:0 4px 14px rgba(33,73,63,.06);
+  --danger:#93463f;
+  --danger-soft:#f7e9e7;
+  --radius:18px;
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
-header{position:sticky;top:0;background:#f4f8f7f2;border-bottom:1px solid var(--border);z-index:20;backdrop-filter:blur(8px)}
-.top{max-width:1180px;margin:auto;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.brand{display:flex;align-items:center;gap:10px}.logo{width:38px;height:38px;border-radius:12px;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:20px}
-.top h1{margin:0;font-size:1.22rem}.muted{color:var(--muted)}
-main{max-width:1180px;margin:auto;padding:18px}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
-.tabs button{border:1px solid var(--border);border-radius:12px;padding:11px;font-weight:750;background:#fff;color:#31484b;cursor:pointer}
-.tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.panel{display:none}.panel.active{display:block}.grid{display:grid;gap:14px}.two{grid-template-columns:repeat(2,minmax(0,1fr))}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
-h2,h3{margin:0 0 12px}label{display:block;font-size:.88rem;font-weight:750;margin:9px 0 6px}
-input,select,textarea{width:100%;padding:10px 11px;border:1px solid #ccd8d5;border-radius:10px;font:inherit;background:#fff;color:var(--text)}
-textarea{min-height:100px}.primary,.small,.ghost{border:0;border-radius:10px;padding:10px 13px;font-weight:750;cursor:pointer}
-.primary{background:var(--primary);color:#fff;margin-top:10px}.small{background:#e8efed}.ghost{background:#fff;border:1px solid var(--border)}
-.danger{background:var(--danger);color:#fff}.danger-lite{background:var(--danger-soft);color:var(--danger)}
-.listrow{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
-.empty{text-align:center;color:var(--muted);padding:18px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{border:1px solid var(--border);border-radius:12px;padding:14px;background:#fbfdfc}.stat b{display:block;font-size:1.35rem}
-.summary{border-left:4px solid var(--primary);background:#f8fbfa;border-radius:10px;padding:11px;margin:8px 0}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:0 0 12px}.toolbar-left,.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.matrix-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px;background:#fff;max-height:68vh}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 8% 0%,rgba(73,129,114,.08),transparent 28rem),
+    linear-gradient(180deg,#f7faf8 0,#f2f6f4 100%);
+  color:var(--text);
+  min-height:100vh
+}
+button,input,select,textarea{font:inherit}
+button{touch-action:manipulation}
+header{
+  position:sticky;
+  top:0;
+  z-index:30;
+  border-bottom:1px solid rgba(220,230,226,.9);
+  background:rgba(247,250,248,.92);
+  backdrop-filter:blur(14px)
+}
+.top{
+  max-width:1180px;
+  margin:auto;
+  padding:14px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px
+}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{
+  width:44px;height:44px;border-radius:14px;
+  display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--primary),#3f7b6f);
+  box-shadow:0 8px 18px rgba(47,104,93,.22);
+  color:#fff
+}
+.logo svg{width:23px;height:23px;display:block}
+.top h1{margin:0;font-size:1.25rem;letter-spacing:-.02em}
+.subtitle{font-size:.84rem;color:var(--muted);margin-top:2px}
+.version{
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--muted);
+  padding:6px 9px;
+  border-radius:999px;
+  font-size:.78rem;
+  font-weight:800
+}
+.muted{color:var(--muted)}
+main{max-width:1180px;margin:auto;padding:18px}
+.tabs{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  padding:6px;
+  margin-bottom:18px;
+  background:rgba(255,255,255,.75);
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow:var(--shadow-soft)
+}
+.tabs button{
+  border:0;
+  border-radius:11px;
+  padding:11px 12px;
+  font-weight:800;
+  background:transparent;
+  color:#526560;
+  cursor:pointer;
+  transition:.18s ease
+}
+.tabs button:hover{background:#eef5f2;color:var(--primary-dark)}
+.tabs button.active{
+  background:var(--primary);
+  color:#fff;
+  box-shadow:0 5px 12px rgba(47,104,93,.18)
+}
+.panel{display:none}.panel.active{display:block}
+.grid{display:grid;gap:14px}.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{
+  background:rgba(255,255,255,.96);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:var(--shadow);
+  margin-bottom:14px
+}
+h2,h3{margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:1.08rem}
+h3{font-size:1rem}
+label{display:block;font-size:.87rem;font-weight:800;margin:10px 0 6px;color:#42534f}
+input,select,textarea{
+  width:100%;
+  padding:10px 11px;
+  border:1px solid #cddad5;
+  border-radius:11px;
+  background:#fff;
+  color:var(--text);
+  outline:none;
+  transition:border-color .16s ease,box-shadow .16s ease
+}
+input:focus,select:focus,textarea:focus{
+  border-color:#79a99d;
+  box-shadow:0 0 0 3px rgba(73,129,114,.11)
+}
+textarea{min-height:100px;resize:vertical}
+.primary,.small,.ghost{
+  border:0;border-radius:11px;padding:10px 13px;font-weight:800;cursor:pointer
+}
+.primary{
+  background:var(--primary);color:#fff;margin-top:10px;
+  box-shadow:0 5px 12px rgba(47,104,93,.16)
+}
+.primary:hover{background:var(--primary-dark)}
+.small{background:#edf4f1;color:#37534d}
+.small:hover{background:#e4efeb}
+.ghost{background:#fff;border:1px solid var(--border);color:#4b5e59}
+.danger{background:var(--danger);color:#fff}
+.danger-lite{background:var(--danger-soft);color:var(--danger)}
+.listrow{
+  display:grid;
+  grid-template-columns:110px 1fr auto;
+  gap:10px;
+  align-items:center;
+  padding:11px 2px;
+  border-bottom:1px solid #e7eeeb
+}
+.listrow:last-child{border-bottom:0}
+.empty{text-align:center;color:var(--muted);padding:22px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.stat{
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:15px;
+  background:linear-gradient(180deg,#fff,#f8fbf9)
+}
+.stat b{display:block;font-size:1.45rem;margin-top:4px;color:var(--primary-dark)}
+.summary{
+  border-left:4px solid var(--primary);
+  background:var(--surface-soft);
+  border-radius:11px;
+  padding:12px;
+  margin:9px 0
+}
+.toolbar{
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:0 0 12px
+}
+.toolbar-left,.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.matrix-wrap{
+  overflow:auto;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:#fff;
+  max-height:68vh;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7)
+}
 table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:.9rem}
-.matrix th,.matrix td{border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:8px;text-align:center;vertical-align:middle;background:#fff}
-.matrix th{position:sticky;top:0;z-index:8;background:#edf5f2;font-size:.8rem;min-width:104px;max-width:130px;line-height:1.2}
-.matrix .student-col{position:sticky;left:0;z-index:9;text-align:left;min-width:190px;max-width:230px;background:#fff}
-.matrix th.student-col{z-index:10;background:#edf5f2}
-.matrix .status-col{min-width:125px}.student-name{font-weight:800}.student-id{font-size:.78rem;color:var(--muted);margin-top:2px}
-.check{appearance:none;-webkit-appearance:none;width:28px;height:28px;border:2px solid #bdcbc7;border-radius:9px;background:#fff;display:inline-grid;place-content:center;cursor:pointer;margin:0}
-.check:checked{background:var(--primary);border-color:var(--primary)}.check:checked::after{content:'✓';color:#fff;font-weight:900;font-size:18px;line-height:1}
-.note-btn{border:1px solid var(--border);background:#fff;border-radius:9px;padding:7px 9px;font-weight:750;cursor:pointer;white-space:nowrap}.note-btn.has{background:var(--primary-soft);border-color:#b8d8d1;color:#234f49}
-.note-row td{background:#fbfdfc}.note-row textarea{min-height:74px}
-.criteria-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}.criterion{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:9px;border:1px solid var(--border);border-radius:11px;background:#fbfdfc}
-.criterion input{margin:0}.hint{font-size:.84rem;color:var(--muted);line-height:1.45}.pill{display:inline-block;padding:5px 8px;border-radius:999px;background:var(--primary-soft);color:#234f49;font-size:.8rem;font-weight:700;margin:3px}
-.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.section-title h2{margin-bottom:0}
-@media(max-width:760px){main{padding:12px}.top{padding:12px}.two{grid-template-columns:1fr}.tabs{grid-template-columns:1fr 1fr}.stats{grid-template-columns:1fr}.listrow{grid-template-columns:1fr}.card{padding:13px}.matrix-wrap{max-height:72vh}.matrix .student-col{min-width:150px;max-width:170px}.matrix th{min-width:92px}.toolbar{align-items:stretch}.toolbar-left,.toolbar-right{width:100%}.toolbar .primary,.toolbar .ghost{flex:1}}
+.matrix th,.matrix td{
+  border-bottom:1px solid #e4ece9;
+  border-right:1px solid #e8efec;
+  padding:8px;
+  text-align:center;
+  vertical-align:middle;
+  background:#fff
+}
+.matrix tbody tr:hover td{background:#fbfdfc}
+.matrix th{
+  position:sticky;top:0;z-index:8;
+  background:#edf5f2;
+  color:#3c514b;
+  font-size:.79rem;
+  min-width:104px;max-width:130px;
+  line-height:1.25
+}
+.matrix .student-col{
+  position:sticky;left:0;z-index:9;
+  text-align:left;min-width:190px;max-width:230px;
+  background:#fff
+}
+.matrix tbody tr:hover .student-col{background:#f9fcfb}
+.matrix th.student-col{z-index:10;background:#e6f0ec}
+.matrix .status-col{min-width:125px}
+.student-name{font-weight:850}
+.student-id{font-size:.76rem;color:var(--muted);margin-top:2px}
+.check{
+  appearance:none;-webkit-appearance:none;
+  width:30px;height:30px;
+  border:2px solid #b9cbc5;
+  border-radius:9px;
+  background:#fff;
+  display:inline-grid;place-content:center;
+  cursor:pointer;margin:0;
+  transition:.14s ease
+}
+.check:hover{border-color:#7ea99e;background:#f5faf8}
+.check:checked{
+  background:var(--primary);
+  border-color:var(--primary);
+  box-shadow:0 3px 8px rgba(47,104,93,.18)
+}
+.check:checked::after{content:'✓';color:#fff;font-weight:900;font-size:18px;line-height:1}
+.note-btn{
+  border:1px solid var(--border);
+  background:#fff;
+  color:#4c5d59;
+  border-radius:9px;
+  padding:7px 9px;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap
+}
+.note-btn.has{background:var(--primary-soft);border-color:#b8d8d1;color:#234f49}
+.note-row td{background:#fbfdfc}
+.note-row textarea{min-height:74px}
+.criteria-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.criterion{
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  gap:8px;align-items:center;
+  padding:9px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:#fbfdfc
+}
+.criterion input{margin:0}
+.hint{font-size:.84rem;color:var(--muted);line-height:1.45}
+.pill{
+  display:inline-block;
+  padding:6px 9px;
+  border-radius:999px;
+  background:var(--primary-soft);
+  color:#28554c;
+  border:1px solid #d2e6df;
+  font-size:.8rem;
+  font-weight:750;
+  margin:3px
+}
+.section-title{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap
+}
+.section-title h2{margin-bottom:0}
+
+.report-panel{
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:#f8fbf9
+}
+.report-heading{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-bottom:10px
+}
+.report-options{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin:8px 0 12px
+}
+.report-chip{
+  border:1px solid #cbdad5;
+  background:#fff;
+  color:#40534e;
+  border-radius:999px;
+  padding:8px 10px;
+  font-size:.82rem;
+  font-weight:750;
+  cursor:pointer;
+  text-align:left
+}
+.report-chip:hover{border-color:#8eb2a8;background:#f2f8f5}
+.report-chip.active{
+  background:var(--primary);
+  border-color:var(--primary);
+  color:#fff;
+  box-shadow:0 3px 9px rgba(47,104,93,.14)
+}
+.report-btn{
+  border:1px solid #c9dbd5;
+  background:#f8fbfa;
+  color:#31584f;
+  border-radius:9px;
+  padding:7px 9px;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap
+}
+.report-btn.has{
+  background:#dfeee9;
+  border-color:#aacfc5;
+  color:#214e45
+}
+.report-history{
+  margin-top:8px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#eef6f3
+}
+
+@media(max-width:760px){
+  main{padding:12px}
+  .top{padding:11px 12px}
+  .logo{width:40px;height:40px;border-radius:13px}
+  .subtitle{display:none}
+  .two{grid-template-columns:1fr}
+  .tabs{grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;position:sticky;top:66px;z-index:18}
+  .tabs button{padding:10px 5px;font-size:.78rem}
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .stat{padding:12px}
+  .stat b{font-size:1.25rem}
+  .listrow{grid-template-columns:1fr}
+  .card{padding:14px;border-radius:15px}
+  .matrix-wrap{max-height:72vh}
+  .matrix .student-col{min-width:150px;max-width:170px}
+  .matrix th{min-width:92px}
+  .toolbar{align-items:stretch}
+  .toolbar-left,.toolbar-right{width:100%}
+  .toolbar .primary,.toolbar .ghost{flex:1}
+}
+@media(max-width:520px){
+  .stats{grid-template-columns:1fr}
+  .tabs button{font-size:.74rem}
+}
+
 </style>
 </head>
 <body>
-<header><div class="top"><div class="brand"><div class="logo">⚗</div><div><h1>Naturfag Labb</h1><div class="muted">Rask registrering av observasjoner</div></div></div><div class="muted">v1.1</div></div></header>
+<header>
+  <div class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M9 3h6M10 3v5.2l-4.2 7.1A3.7 3.7 0 0 0 9 21h6a3.7 3.7 0 0 0 3.2-5.7L14 8.2V3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8.2 14h7.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="10" cy="17" r=".8" fill="currentColor"/>
+          <circle cx="14.4" cy="18.1" r=".65" fill="currentColor"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Naturfag Labb</h1>
+        <div class="subtitle">Rask registrering av observasjoner</div>
+      </div>
+    </div>
+    <div class="version">v1.2</div>
+  </div>
+</header>
 <main>
-<div class="tabs"><button class="active" data-tab="oversikt">Oversikt</button><button data-tab="klasser">Klasser</button><button data-tab="labber">Labber</button><button data-tab="elever">Elever</button></div>
+<div class="tabs"><button class="active" data-tab="oversikt">Oversikt</button><button data-tab="klasser">Klasser</button><button data-tab="labber">Timenotater</button><button data-tab="elever">Elever</button></div>
 
 <section id="oversikt" class="panel active">
-  <div class="card"><h2>Oversikt</h2><div class="stats"><div class="stat"><span class="muted">Klasser</span><b id="sClasses">0</b></div><div class="stat"><span class="muted">Labber</span><b id="sLabs">0</b></div><div class="stat"><span class="muted">Observasjoner</span><b id="sObs">0</b></div></div><p class="hint">Data lagres lokalt i nettleseren. Elevnummer brukes som fast pseudonym-ID.</p></div>
-  <div class="card"><h2>Siste labber</h2><div id="recent"></div></div>
+  <div class="card"><h2>Oversikt</h2><div class="stats"><div class="stat"><span class="muted">Klasser</span><b id="sClasses">0</b></div><div class="stat"><span class="muted">Timenotater</span><b id="sLabs">0</b></div><div class="stat"><span class="muted">Observasjoner</span><b id="sObs">0</b></div></div><p class="hint">Data lagres lokalt i nettleseren. Elevnummer brukes som fast pseudonym-ID.</p></div>
+  <div class="card"><h2>Siste timenotater</h2><div id="recent"></div></div>
 </section>
 
 <section id="klasser" class="panel">
@@ -81,6 +406,21 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
     </div>
   </div>
 
+
+  <div class="card">
+    <div class="section-title"><h2>Labrapport-kommentarer</h2><button class="small" onclick="toggleReportComments()">Rediger kommentarer</button></div>
+    <div class="hint">Disse kommentarene kan hukes av raskt på hver elevs labrapport. Du kan legge til, endre og fjerne alternativer.</div>
+    <div id="reportCommentsPreview" style="margin-top:8px"></div>
+    <div id="reportCommentsEditor" style="display:none;margin-top:12px">
+      <div class="criteria-list" id="reportCommentsList"></div>
+      <div class="grid two" style="margin-top:10px">
+        <input id="newReportComment" placeholder="Ny labrapport-kommentar">
+        <button class="primary" style="margin-top:0" onclick="addReportComment()">Legg til kommentar</button>
+      </div>
+      <div class="hint" style="margin-top:8px">Når et alternativ fjernes her, beholdes kommentarer som allerede er registrert på tidligere labrapporter.</div>
+    </div>
+  </div>
+
   <div class="card"><div class="section-title"><h2>Registrering</h2><span class="hint">Ett trykk = registrert</span></div><div id="activeLab"></div></div>
 </section>
 
@@ -101,21 +441,42 @@ const DEFAULT_CRITERIA=[
   "Har lite fokus"
 ];
 
+const DEFAULT_REPORT_COMMENTS=[
+  "Mangelfull beskrivelse av gjennomføring",
+  "Mangelfull konklusjon",
+  "Utydelig hensikt eller problemstilling",
+  "Mangler observasjoner eller resultater",
+  "God beskrivelse av gjennomføring",
+  "God og faglig relevant konklusjon",
+  "Bruker fagbegreper godt",
+  "Viser god forståelse av resultatene",
+  "Rapporten er ryddig og oversiktlig",
+  "Trenger å begrunne konklusjonen bedre"
+];
+
 function loadData(){
   let d=null;
-  try{d=JSON.parse(localStorage.getItem('naturfag_labb_v1_1'))}catch(e){}
-  if(!d){
-    try{d=JSON.parse(localStorage.getItem('naturfag_labb_v1'))}catch(e){}
+  for(const key of ['naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
+    if(d)break;
+    try{d=JSON.parse(localStorage.getItem(key))}catch(e){}
   }
   d=d||{classes:{},labs:[]};
   d.classes||={}; d.labs||=[];
   if(!Array.isArray(d.criteria)||!d.criteria.length)d.criteria=[...DEFAULT_CRITERIA];
+  if(!Array.isArray(d.reportComments)||!d.reportComments.length)d.reportComments=[...DEFAULT_REPORT_COMMENTS];
+  d.labs.forEach(l=>(l.students||[]).forEach(s=>{
+    s.tags=Array.isArray(s.tags)?s.tags:[];
+    s.note=s.note||'';
+    s.reportTags=Array.isArray(s.reportTags)?s.reportTags:[];
+    s.reportNote=s.reportNote||'';
+  }));
   return d;
 }
 let data=loadData();
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-function persist(){localStorage.setItem('naturfag_labb_v1_1',JSON.stringify(data))}
+function jsq(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ')}
+function persist(){localStorage.setItem('naturfag_labb_v1_2',JSON.stringify(data))}
 function save(){persist();renderAll()}
 function classes(){return Object.keys(data.classes).sort((a,b)=>a.localeCompare(b,'nb'))}
 function fill(id,vals,ph='Velg...'){
@@ -131,7 +492,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
 });
 
 function addClass(){let n=className.value.trim();if(!n)return alert('Skriv inn klasse.');data.classes[n]??=[];className.value='';save()}
-function removeClass(c){if(!confirm('Slette klassen og tilhørende labber?'))return;delete data.classes[c];data.labs=data.labs.filter(l=>l.cls!==c);save()}
+function removeClass(c){if(!confirm('Slette klassen og tilhørende timenotater?'))return;delete data.classes[c];data.labs=data.labs.filter(l=>l.cls!==c);save()}
 function saveStudents(){
   let c=studentClass.value,names=studentNames.value.split('\n').map(x=>x.trim()).filter(Boolean);
   if(!c||!names.length)return alert('Velg klasse og skriv inn elever.');
@@ -149,7 +510,7 @@ function createLab(){
   let c=labClass.value,n=labName.value.trim(),d=labDate.value||new Date().toISOString().slice(0,10);
   if(!c||!n)return alert('Velg klasse og skriv inn navn på labben.');
   if(!(data.classes[c]||[]).length)return alert('Legg inn elevliste først.');
-  data.labs.unshift({id:Date.now(),cls:c,name:n,date:d,students:data.classes[c].map(s=>({id:s.id,name:s.name,status:'Gjennomført',tags:[],note:''}))});
+  data.labs.unshift({id:Date.now(),cls:c,name:n,date:d,students:data.classes[c].map(s=>({id:s.id,name:s.name,status:'Gjennomført',tags:[],note:'',reportTags:[],reportNote:''}))});
   labName.value='';save();
   setTimeout(()=>{labSelect.value=String(data.labs[0].id);renderLab()},0);
 }
@@ -165,16 +526,70 @@ function setStatus(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.stu
 function toggleNoteRow(i){let r=document.getElementById('noteRow'+i);if(r)r.style.display=r.style.display==='none'?'table-row':'none'}
 function note(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].note=v.trim();persist();let btn=document.getElementById('noteBtn'+i);if(btn)btn.classList.toggle('has',!!v.trim());renderStats()}
 
+function toggleReportRow(i){
+  let r=document.getElementById('reportRow'+i);
+  if(r)r.style.display=r.style.display==='none'?'table-row':'none';
+}
+function toggleReportTag(labId,studentIndex,comment){
+  let l=data.labs.find(x=>x.id===labId);if(!l)return;
+  let s=l.students[studentIndex],a=s.reportTags||(s.reportTags=[]),p=a.indexOf(comment);
+  p>=0?a.splice(p,1):a.push(comment);
+  persist();
+  let chip=document.querySelector(`[data-report-student="${studentIndex}"][data-report-comment="${CSS.escape(comment)}"]`);
+  if(chip)chip.classList.toggle('active',a.includes(comment));
+  let btn=document.getElementById('reportBtn'+studentIndex);
+  if(btn){
+    let has=a.length||s.reportNote;
+    btn.classList.toggle('has',!!has);
+    btn.textContent=has?'Labrapport ✓':'Labrapport';
+  }
+  renderStats();
+}
+function reportNote(id,i,v){
+  let l=data.labs.find(x=>x.id===id);if(!l)return;
+  let s=l.students[i];s.reportNote=v.trim();persist();
+  let btn=document.getElementById('reportBtn'+i);
+  if(btn){
+    let has=(s.reportTags||[]).length||s.reportNote;
+    btn.classList.toggle('has',!!has);
+    btn.textContent=has?'Labrapport ✓':'Labrapport';
+  }
+  renderStats();
+}
+
 function renderLab(){
   let id=+labSelect.value,l=data.labs.find(x=>x.id===id);
   if(!l){activeLab.innerHTML='<div class="empty">Velg en labb.</div>';return}
   let head=data.criteria.map(c=>`<th title="${esc(c)}">${esc(c)}</th>`).join('');
   let rows=l.students.map((s,i)=>{
-    s.tags||=[]; if(!s.status)s.status='Gjennomført';
-    let checks=data.criteria.map(c=>`<td><input class="check" type="checkbox" ${s.tags.includes(c)?'checked':''} aria-label="${esc(c)} for ${esc(s.name)}" onchange="toggleObservation(${l.id},${i},'${c.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}',this.checked)"></td>`).join('');
-    return `<tr><td class="student-col"><div class="student-name">${esc(s.name)}</div><div class="student-id">Elev ${s.id}</div></td><td class="status-col"><select onchange="setStatus(${l.id},${i},this.value)"><option ${s.status==='Gjennomført'?'selected':''}>Gjennomført</option><option ${s.status==='Fravær'?'selected':''}>Fravær</option><option ${s.status==='Ikke gjennomført'?'selected':''}>Ikke gjennomført</option></select></td>${checks}<td><button id="noteBtn${i}" class="note-btn ${s.note?'has':''}" onclick="toggleNoteRow(${i})">${s.note?'Notat ✓':'Notat +'}</button></td></tr><tr class="note-row" id="noteRow${i}" style="display:none"><td class="student-col"><strong>${esc(s.name)}</strong></td><td colspan="${data.criteria.length+2}"><textarea oninput="note(${l.id},${i},this.value)" placeholder="Korte stikkord om eleven...">${esc(s.note||'')}</textarea></td></tr>`
+    s.tags||=[]; s.reportTags||=[]; s.reportNote=s.reportNote||''; if(!s.status)s.status='Gjennomført';
+    let checks=data.criteria.map(c=>`<td><input class="check" type="checkbox" ${s.tags.includes(c)?'checked':''} aria-label="${esc(c)} for ${esc(s.name)}" onchange="toggleObservation(${l.id},${i},'${jsq(c)}',this.checked)"></td>`).join('');
+    let reportChips=data.reportComments.map(c=>`<button type="button" class="report-chip ${s.reportTags.includes(c)?'active':''}" data-report-student="${i}" data-report-comment="${esc(c)}" onclick="toggleReportTag(${l.id},${i},'${jsq(c)}')">${esc(c)}</button>`).join('');
+    let reportHas=s.reportTags.length||s.reportNote;
+    return `<tr>
+      <td class="student-col"><div class="student-name">${esc(s.name)}</div><div class="student-id">Elev ${s.id}</div></td>
+      <td class="status-col"><select onchange="setStatus(${l.id},${i},this.value)"><option ${s.status==='Gjennomført'?'selected':''}>Gjennomført</option><option ${s.status==='Fravær'?'selected':''}>Fravær</option><option ${s.status==='Ikke gjennomført'?'selected':''}>Ikke gjennomført</option></select></td>
+      ${checks}
+      <td><button id="noteBtn${i}" class="note-btn ${s.note?'has':''}" onclick="toggleNoteRow(${i})">${s.note?'Notat ✓':'Notat +'}</button></td>
+      <td><button id="reportBtn${i}" class="report-btn ${reportHas?'has':''}" onclick="toggleReportRow(${i})">${reportHas?'Labrapport ✓':'Labrapport'}</button></td>
+    </tr>
+    <tr class="note-row" id="noteRow${i}" style="display:none">
+      <td class="student-col"><strong>${esc(s.name)}</strong></td>
+      <td colspan="${data.criteria.length+3}"><textarea oninput="note(${l.id},${i},this.value)" placeholder="Korte stikkord om eleven...">${esc(s.note||'')}</textarea></td>
+    </tr>
+    <tr class="note-row" id="reportRow${i}" style="display:none">
+      <td class="student-col"><strong>${esc(s.name)}</strong><div class="student-id">Labrapport</div></td>
+      <td colspan="${data.criteria.length+3}">
+        <div class="report-panel">
+          <div class="report-heading"><strong>Hurtigkommentarer</strong><span class="hint">Trykk på alle som passer</span></div>
+          <div class="report-options">${reportChips||'<span class="muted">Ingen standardkommentarer er lagt inn.</span>'}</div>
+          <label>Egen kommentar</label>
+          <textarea oninput="reportNote(${l.id},${i},this.value)" placeholder="Kort individuell kommentar til labrapporten...">${esc(s.reportNote||'')}</textarea>
+        </div>
+      </td>
+    </tr>`;
   }).join('');
-  activeLab.innerHTML=`<div class="toolbar"><div class="toolbar-left"><div><strong>${esc(l.name)}</strong><div class="muted">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class="toolbar-right"><span class="hint">${l.students.length} elever</span></div></div><div class="matrix-wrap"><table class="matrix"><thead><tr><th class="student-col">Elev</th><th class="status-col">Status</th>${head}<th>Notat</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  activeLab.innerHTML=`<div class="toolbar"><div class="toolbar-left"><div><strong>${esc(l.name)}</strong><div class="muted">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class="toolbar-right"><span class="hint">${l.students.length} elever</span></div></div><div class="matrix-wrap"><table class="matrix"><thead><tr><th class="student-col">Elev</th><th class="status-col">Status</th>${head}<th>Notat</th><th>Labrapport</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function toggleCriteria(){let e=document.getElementById('criteriaEditor');e.style.display=e.style.display==='none'?'block':'none';renderCriteria()}
@@ -193,6 +608,40 @@ function renameCriterion(i,v){
 }
 function moveCriterion(i,dir){let j=i+dir;if(j<0||j>=data.criteria.length)return;[data.criteria[i],data.criteria[j]]=[data.criteria[j],data.criteria[i]];persist();renderCriteria();renderLab()}
 
+
+function toggleReportComments(){
+  let e=document.getElementById('reportCommentsEditor');
+  e.style.display=e.style.display==='none'?'block':'none';
+  renderReportComments();
+}
+function renderReportComments(){
+  reportCommentsPreview.innerHTML=data.reportComments.length?data.reportComments.map(c=>`<span class="pill">${esc(c)}</span>`).join(''):'<span class="muted">Ingen aktive labrapport-kommentarer.</span>';
+  reportCommentsList.innerHTML=data.reportComments.map((c,i)=>`<div class="criterion"><input value="${esc(c)}" onchange="renameReportComment(${i},this.value)"><button class="small" onclick="moveReportComment(${i},-1)" title="Flytt opp">↑</button><button class="small danger-lite" onclick="deleteReportComment(${i})">Slett</button></div>`).join('');
+}
+function addReportComment(){
+  let v=newReportComment.value.trim();if(!v)return;
+  if(data.reportComments.some(c=>c.toLowerCase()===v.toLowerCase()))return alert('Denne kommentaren finnes allerede.');
+  data.reportComments.push(v);newReportComment.value='';
+  persist();renderReportComments();renderLab();
+}
+function deleteReportComment(i){
+  let c=data.reportComments[i];
+  if(!confirm(`Fjerne «${c}» fra aktive labrapport-kommentarer? Tidligere registreringer beholdes.`))return;
+  data.reportComments.splice(i,1);persist();renderReportComments();renderLab();
+}
+function renameReportComment(i,v){
+  v=v.trim();let old=data.reportComments[i];if(!v){renderReportComments();return}
+  if(data.reportComments.some((c,j)=>j!==i&&c.toLowerCase()===v.toLowerCase())){alert('Denne kommentaren finnes allerede.');renderReportComments();return}
+  data.reportComments[i]=v;
+  data.labs.forEach(l=>l.students.forEach(s=>{if(Array.isArray(s.reportTags))s.reportTags=s.reportTags.map(t=>t===old?v:t)}));
+  persist();renderReportComments();renderLab();renderHistory();
+}
+function moveReportComment(i,dir){
+  let j=i+dir;if(j<0||j>=data.reportComments.length)return;
+  [data.reportComments[i],data.reportComments[j]]=[data.reportComments[j],data.reportComments[i]];
+  persist();renderReportComments();renderLab();
+}
+
 function deleteLab(){let id=+labSelect.value;if(!id)return;if(confirm('Slette denne labben?')){data.labs=data.labs.filter(x=>x.id!==id);save()}}
 function updateHistStudents(){let c=histClass.value;fill('histStudent',(data.classes[c]||[]).map(s=>({value:String(s.id),label:`Elev ${s.id} · ${s.name}`})),'Velg elev');renderHistory()}
 function renderHistory(){
@@ -201,12 +650,12 @@ function renderHistory(){
   data.labs.filter(l=>l.cls===c).forEach(l=>{let r=l.students.find(s=>s.id===id);if(r)recs.push({...r,lab:l.name,date:l.date})});
   if(!recs.length){history.innerHTML='<div class="empty">Ingen historikk ennå.</div>';return}
   let counts={};recs.forEach(r=>(r.tags||[]).forEach(t=>counts[t]=(counts[t]||0)+1));
-  history.innerHTML=`<h3>Elev ${id} <span class="muted">· ${esc(st?.name||'')}</span></h3><div class="summary">${recs.length} labber · ${recs.filter(r=>r.status==='Gjennomført').length} gjennomført · ${recs.filter(r=>r.status==='Fravær').length} fravær</div><div>${Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="pill">${esc(t)} · ${n}</span>`).join('')}</div>`+recs.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<div class="summary"><strong>${esc(r.lab)}</strong> · ${esc(r.date)}<br><span class="muted">${esc(r.status)}</span>${(r.tags||[]).length?`<div>${r.tags.map(esc).join(' · ')}</div>`:''}${r.note?`<div>Stikkord: ${esc(r.note)}</div>`:''}</div>`).join('')
+  history.innerHTML=`<h3>Elev ${id} <span class="muted">· ${esc(st?.name||'')}</span></h3><div class="summary">${recs.length} timenotater · ${recs.filter(r=>r.status==='Gjennomført').length} gjennomført · ${recs.filter(r=>r.status==='Fravær').length} fravær</div><div>${Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="pill">${esc(t)} · ${n}</span>`).join('')}</div>`+recs.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<div class="summary"><strong>${esc(r.lab)}</strong> · ${esc(r.date)}<br><span class="muted">${esc(r.status)}</span>${(r.tags||[]).length?`<div>${r.tags.map(esc).join(' · ')}</div>`:''}${r.note?`<div>Stikkord: ${esc(r.note)}</div>`:''}${((r.reportTags||[]).length||r.reportNote)?`<div class="report-history"><strong>Labrapport</strong>${(r.reportTags||[]).length?`<div>${r.reportTags.map(esc).join(' · ')}</div>`:''}${r.reportNote?`<div>Egen kommentar: ${esc(r.reportNote)}</div>`:''}</div>`:''}</div>`).join('')
 }
-function renderRecent(){recent.innerHTML=data.labs.length?data.labs.slice(0,8).map(l=>`<div class="listrow"><strong>${esc(l.cls)}</strong><span><strong>${esc(l.name)}</strong><br><span class="muted">${esc(l.date)}</span></span><span>${l.students.filter(s=>s.status==='Fravær').length} fravær</span></div>`).join(''):'<div class="empty">Ingen labber opprettet.</div>'}
-function renderStats(){sClasses.textContent=classes().length;sLabs.textContent=data.labs.length;sObs.textContent=data.labs.reduce((n,l)=>n+l.students.reduce((m,s)=>m+(s.tags||[]).length+(s.note?1:0),0),0)}
+function renderRecent(){recent.innerHTML=data.labs.length?data.labs.slice(0,8).map(l=>`<div class="listrow"><strong>${esc(l.cls)}</strong><span><strong>${esc(l.name)}</strong><br><span class="muted">${esc(l.date)}</span></span><span>${l.students.filter(s=>s.status==='Fravær').length} fravær</span></div>`).join(''):'<div class="empty">Ingen timenotater opprettet.</div>'}
+function renderStats(){sClasses.textContent=classes().length;sLabs.textContent=data.labs.length;sObs.textContent=data.labs.reduce((n,l)=>n+l.students.reduce((m,s)=>m+(s.tags||[]).length+(s.note?1:0)+(s.reportTags||[]).length+(s.reportNote?1:0),0),0)}
 function refresh(){let c=classes();['studentClass','labClass','histClass'].forEach(id=>fill(id,c,'Velg klasse'));updateHistStudents()}
-function renderAll(){refresh();renderClasses();renderStudents();renderLabSelect();renderLab();renderRecent();renderStats();renderCriteria()}
+function renderAll(){refresh();renderClasses();renderStudents();renderLabSelect();renderLab();renderRecent();renderStats();renderCriteria();renderReportComments()}
 labDate.value=new Date().toISOString().slice(0,10);renderAll();
 </script>
 </body>
