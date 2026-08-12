@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Naturfag Labb v1.3</title>
+<title>Naturfag Labb v1.3.1</title>
 <style>
 
 :root{
@@ -390,7 +390,7 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
         <div class="subtitle">Rask registrering av observasjoner</div>
       </div>
     </div>
-    <div class="version">v1.3</div>
+    <div class="version">v1.3.1</div>
   </div>
 </header>
 <main>
@@ -666,7 +666,7 @@ function deleteLab(){let id=+labSelect.value;if(!id)return;if(confirm('Slette de
 function updateHistStudents(){let c=histClass.value;fill('histStudent',(data.classes[c]||[]).map(s=>({value:String(s.id),label:`Elev ${s.id} · ${s.name}`})),'Velg elev');renderHistory()}
 function renderHistory(){
   let c=histClass.value,id=+histStudent.value;
-  if(!c||!id){history.innerHTML='<div class="empty">Velg klasse og elev.</div>';return}
+  if(!c||!id){document.getElementById('history').innerHTML='<div class="empty">Velg klasse og elev.</div>';return}
   let st=(data.classes[c]||[]).find(s=>s.id===id),recs=[];
   data.labs.filter(l=>l.cls===c).forEach(l=>{
     let r=l.students.find(s=>s.id===id);
@@ -679,7 +679,7 @@ function renderHistory(){
        ${recs.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<div class="summary"><strong>${esc(r.lab)}</strong> · ${esc(r.date)}<br><span class="muted">${esc(r.status)}</span>${(r.tags||[]).length?`<div>${r.tags.map(esc).join(' · ')}</div>`:''}${r.note?`<div>Stikkord: ${esc(r.note)}</div>`:''}${((r.reportTags||[]).length||r.reportNote)?`<div class="report-history"><strong>Labrapport</strong>${(r.reportTags||[]).length?`<div>${r.reportTags.map(esc).join(' · ')}</div>`:''}${r.reportNote?`<div>Egen kommentar: ${esc(r.reportNote)}</div>`:''}</div>`:''}</div>`).join('')}`
     : '<div class="empty">Ingen historikk ennå.</div>';
 
-  history.innerHTML=`<h3>Elev ${id} <span class="muted">· ${esc(st?.name||'')}</span></h3>
+  document.getElementById('history').innerHTML=`<h3>Elev ${id} <span class="muted">· ${esc(st?.name||'')}</span></h3>
     <div class="ai-card">
       <div class="ai-head">
         <div><strong>Generell kommentar med KI</strong><div class="hint">KI-en får kun «Elev ${id}» og registrerte observasjoner – ikke elevnavnet.</div></div>
