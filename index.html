@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Naturfag Labb v1.3.1</title>
+<title>Naturfag Labb v1.4</title>
 <style>
 
 :root{
@@ -390,7 +390,7 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
         <div class="subtitle">Rask registrering av observasjoner</div>
       </div>
     </div>
-    <div class="version">v1.3.1</div>
+    <div class="version">v1.4</div>
   </div>
 </header>
 <main>
@@ -475,7 +475,7 @@ const DEFAULT_REPORT_COMMENTS=[
 
 function loadData(){
   let d=null;
-  for(const key of ['naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
+  for(const key of ['naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
     if(d)break;
     try{d=JSON.parse(localStorage.getItem(key))}catch(e){}
   }
@@ -496,7 +496,7 @@ let data=loadData();
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function jsq(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ')}
-function persist(){localStorage.setItem('naturfag_labb_v1_3',JSON.stringify(data))}
+function persist(){localStorage.setItem('naturfag_labb_v1_4',JSON.stringify(data))}
 function save(){persist();renderAll()}
 function classes(){return Object.keys(data.classes).sort((a,b)=>a.localeCompare(b,'nb'))}
 function fill(id,vals,ph='Velg...'){
@@ -682,16 +682,19 @@ function renderHistory(){
   document.getElementById('history').innerHTML=`<h3>Elev ${id} <span class="muted">· ${esc(st?.name||'')}</span></h3>
     <div class="ai-card">
       <div class="ai-head">
-        <div><strong>Generell kommentar med KI</strong><div class="hint">KI-en får kun «Elev ${id}» og registrerte observasjoner – ikke elevnavnet.</div></div>
+        <div><strong>Lag tekst til KI</strong><div class="hint">Appen lager en anonymisert tekst med «Elev ${id}» og registrerte observasjoner. Elevnavnet blir ikke med.</div></div>
       </div>
       <div class="ai-actions">
-        <button class="primary ai-button" id="generateAiBtn" onclick="generateAIComment()">Generer med KI</button>
+        <button class="primary ai-button" onclick="makeAIPrompt()">Lag KI-tekst</button>
+        <button class="ghost" onclick="copyAIPrompt()">Kopier tekst</button>
         <button class="ghost" onclick="saveGeneralComment()">Lagre kommentar</button>
       </div>
       <div id="aiStatus" class="ai-status"></div>
-      <label>Redigerbar kommentar</label>
-      <textarea id="generalComment" class="ai-output" placeholder="Den genererte kommentaren kommer her. Du kan redigere teksten fritt.">${esc(st?.generalComment||'')}</textarea>
-      <div class="ai-note">Kontroller alltid KI-forslaget før det brukes som vurdering. Funksjonen er laget for å lage et utkast basert på dine registreringer, ikke for å ta vurderingsbeslutningen for deg.</div>
+      <label>Tekst som kan kopieres til ChatGPT</label>
+      <textarea id="aiPrompt" class="ai-output" placeholder="Trykk «Lag KI-tekst» for å samle observasjonene automatisk."></textarea>
+      <label>Redigerbar generell kommentar</label>
+      <textarea id="generalComment" class="ai-output" placeholder="Lim inn KI-forslaget her og rediger teksten fritt.">${esc(st?.generalComment||'')}</textarea>
+      <div class="ai-note">Arbeidsflyt: Lag KI-tekst → kopier teksten → lim den inn i ChatGPT → kopier vurderingsforslaget tilbake hit → rediger ved behov → lagre kommentar.</div>
     </div>
     ${historyHtml}`;
 }
@@ -715,24 +718,58 @@ function buildAIPayload(){
   return {studentId:`Elev ${id}`,records};
 }
 
-async function generateAIComment(){
-  let payload=buildAIPayload(),status=document.getElementById('aiStatus'),btn=document.getElementById('generateAiBtn');
-  if(!payload||!payload.records.length){status.textContent='Det finnes ingen registrerte observasjoner å lage kommentar fra.';return}
-  status.textContent='Lager forslag…';btn.disabled=true;
+function makeAIPrompt(){
+  let payload=buildAIPayload(),status=document.getElementById('aiStatus'),box=document.getElementById('aiPrompt');
+  if(!payload||!payload.records.length){
+    status.textContent='Det finnes ingen registrerte observasjoner å lage KI-tekst fra.';
+    box.value='';
+    return;
+  }
+
+  let lines=[
+    `Jeg ønsker at du lager en kort, generell vurderingskommentar i naturfag for ${payload.studentId}.`,
+    '',
+    'Viktig:',
+    '- Bruk bare opplysningene som står nedenfor.',
+    '- Ikke finn på prestasjoner, egenskaper eller utvikling som ikke er registrert.',
+    '- Skriv på norsk bokmål og i du-form.',
+    '- Trekk fram både styrker og relevante utviklingsområder.',
+    '- Ikke nevn elevnummer, datoer, antall registreringer eller at teksten er laget av KI.',
+    '- Skriv ett sammenhengende avsnitt på omtrent 80–140 ord.',
+    '',
+    'Registrerte observasjoner:'
+  ];
+
+  payload.records.forEach((r,i)=>{
+    lines.push('');
+    lines.push(`${i+1}. ${r.activity || 'Timenotat'}${r.date ? ` (${r.date})` : ''}`);
+    if(r.status)lines.push(`Status: ${r.status}`);
+    if((r.observations||[]).length)lines.push(`Observasjoner: ${r.observations.join(', ')}`);
+    if(r.teacherNote)lines.push(`Lærernotat: ${r.teacherNote}`);
+    if((r.reportComments||[]).length)lines.push(`Labrapport: ${r.reportComments.join(', ')}`);
+    if(r.reportNote)lines.push(`Labrapportnotat: ${r.reportNote}`);
+  });
+
+  box.value=lines.join('\n');
+  status.textContent='KI-teksten er klar. Kopier den og lim den inn i ChatGPT.';
+}
+
+async function copyAIPrompt(){
+  let box=document.getElementById('aiPrompt'),status=document.getElementById('aiStatus');
+  if(!box.value.trim())makeAIPrompt();
+  if(!box.value.trim())return;
   try{
-    let res=await fetch('/.netlify/functions/generate-comment',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    });
-    let json=await res.json().catch(()=>({}));
-    if(!res.ok)throw new Error(json.error||'KI-tjenesten svarte med en feil.');
-    document.getElementById('generalComment').value=json.comment||'';
-    status.textContent='Forslaget er klart. Les gjennom og rediger før du lagrer.';
-  }catch(err){
-    status.textContent='Kunne ikke kontakte KI-funksjonen. Kontroller at Netlify-funksjonen og OPENAI_API_KEY er satt opp.';
-    console.error(err);
-  }finally{btn.disabled=false}
+    await navigator.clipboard.writeText(box.value);
+    status.textContent='Teksten er kopiert. Lim den inn i ChatGPT.';
+  }catch(e){
+    box.focus();box.select();
+    try{
+      document.execCommand('copy');
+      status.textContent='Teksten er kopiert. Lim den inn i ChatGPT.';
+    }catch(err){
+      status.textContent='Kunne ikke kopiere automatisk. Marker teksten og kopier den manuelt.';
+    }
+  }
 }
 
 function saveGeneralComment(){
