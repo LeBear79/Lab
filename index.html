@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Naturfag Labb v1.2</title>
+<title>Naturfag Labb v1.3</title>
 <style>
 
 :root{
@@ -327,6 +327,25 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
   background:#eef6f3
 }
 
+
+.ai-card{
+  margin-top:14px;
+  padding:15px;
+  border:1px solid #cfe1db;
+  border-radius:14px;
+  background:linear-gradient(180deg,#f7fbf9,#eef6f3)
+}
+.ai-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.ai-status{font-size:.84rem;color:var(--muted);min-height:1.2em}
+.ai-output{min-height:150px;line-height:1.5}
+.ai-note{
+  margin-top:9px;padding:9px 11px;border-radius:10px;background:#fff;
+  border:1px solid var(--border);font-size:.82rem;color:var(--muted);line-height:1.45
+}
+.ai-button{background:#315f77;color:#fff}
+.ai-button:hover{background:#294f63}
+
 @media(max-width:760px){
   main{padding:12px}
   .top{padding:11px 12px}
@@ -371,7 +390,7 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
         <div class="subtitle">Rask registrering av observasjoner</div>
       </div>
     </div>
-    <div class="version">v1.2</div>
+    <div class="version">v1.3</div>
   </div>
 </header>
 <main>
@@ -456,7 +475,7 @@ const DEFAULT_REPORT_COMMENTS=[
 
 function loadData(){
   let d=null;
-  for(const key of ['naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
+  for(const key of ['naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
     if(d)break;
     try{d=JSON.parse(localStorage.getItem(key))}catch(e){}
   }
@@ -470,13 +489,14 @@ function loadData(){
     s.reportTags=Array.isArray(s.reportTags)?s.reportTags:[];
     s.reportNote=s.reportNote||'';
   }));
+  Object.values(d.classes).forEach(arr=>(arr||[]).forEach(s=>{s.generalComment=s.generalComment||'';}));
   return d;
 }
 let data=loadData();
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function jsq(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ')}
-function persist(){localStorage.setItem('naturfag_labb_v1_2',JSON.stringify(data))}
+function persist(){localStorage.setItem('naturfag_labb_v1_3',JSON.stringify(data))}
 function save(){persist();renderAll()}
 function classes(){return Object.keys(data.classes).sort((a,b)=>a.localeCompare(b,'nb'))}
 function fill(id,vals,ph='Velg...'){
@@ -645,12 +665,82 @@ function moveReportComment(i,dir){
 function deleteLab(){let id=+labSelect.value;if(!id)return;if(confirm('Slette denne labben?')){data.labs=data.labs.filter(x=>x.id!==id);save()}}
 function updateHistStudents(){let c=histClass.value;fill('histStudent',(data.classes[c]||[]).map(s=>({value:String(s.id),label:`Elev ${s.id} · ${s.name}`})),'Velg elev');renderHistory()}
 function renderHistory(){
-  let c=histClass.value,id=+histStudent.value;if(!c||!id){history.innerHTML='<div class="empty">Velg klasse og elev.</div>';return}
+  let c=histClass.value,id=+histStudent.value;
+  if(!c||!id){history.innerHTML='<div class="empty">Velg klasse og elev.</div>';return}
   let st=(data.classes[c]||[]).find(s=>s.id===id),recs=[];
-  data.labs.filter(l=>l.cls===c).forEach(l=>{let r=l.students.find(s=>s.id===id);if(r)recs.push({...r,lab:l.name,date:l.date})});
-  if(!recs.length){history.innerHTML='<div class="empty">Ingen historikk ennå.</div>';return}
+  data.labs.filter(l=>l.cls===c).forEach(l=>{
+    let r=l.students.find(s=>s.id===id);
+    if(r)recs.push({...r,lab:l.name,date:l.date})
+  });
   let counts={};recs.forEach(r=>(r.tags||[]).forEach(t=>counts[t]=(counts[t]||0)+1));
-  history.innerHTML=`<h3>Elev ${id} <span class="muted">· ${esc(st?.name||'')}</span></h3><div class="summary">${recs.length} timenotater · ${recs.filter(r=>r.status==='Gjennomført').length} gjennomført · ${recs.filter(r=>r.status==='Fravær').length} fravær</div><div>${Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="pill">${esc(t)} · ${n}</span>`).join('')}</div>`+recs.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<div class="summary"><strong>${esc(r.lab)}</strong> · ${esc(r.date)}<br><span class="muted">${esc(r.status)}</span>${(r.tags||[]).length?`<div>${r.tags.map(esc).join(' · ')}</div>`:''}${r.note?`<div>Stikkord: ${esc(r.note)}</div>`:''}${((r.reportTags||[]).length||r.reportNote)?`<div class="report-history"><strong>Labrapport</strong>${(r.reportTags||[]).length?`<div>${r.reportTags.map(esc).join(' · ')}</div>`:''}${r.reportNote?`<div>Egen kommentar: ${esc(r.reportNote)}</div>`:''}</div>`:''}</div>`).join('')
+  let historyHtml=recs.length
+    ? `<div class="summary">${recs.length} timenotater · ${recs.filter(r=>r.status==='Gjennomført').length} gjennomført · ${recs.filter(r=>r.status==='Fravær').length} fravær</div>
+       <div>${Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="pill">${esc(t)} · ${n}</span>`).join('')}</div>
+       ${recs.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<div class="summary"><strong>${esc(r.lab)}</strong> · ${esc(r.date)}<br><span class="muted">${esc(r.status)}</span>${(r.tags||[]).length?`<div>${r.tags.map(esc).join(' · ')}</div>`:''}${r.note?`<div>Stikkord: ${esc(r.note)}</div>`:''}${((r.reportTags||[]).length||r.reportNote)?`<div class="report-history"><strong>Labrapport</strong>${(r.reportTags||[]).length?`<div>${r.reportTags.map(esc).join(' · ')}</div>`:''}${r.reportNote?`<div>Egen kommentar: ${esc(r.reportNote)}</div>`:''}</div>`:''}</div>`).join('')}`
+    : '<div class="empty">Ingen historikk ennå.</div>';
+
+  history.innerHTML=`<h3>Elev ${id} <span class="muted">· ${esc(st?.name||'')}</span></h3>
+    <div class="ai-card">
+      <div class="ai-head">
+        <div><strong>Generell kommentar med KI</strong><div class="hint">KI-en får kun «Elev ${id}» og registrerte observasjoner – ikke elevnavnet.</div></div>
+      </div>
+      <div class="ai-actions">
+        <button class="primary ai-button" id="generateAiBtn" onclick="generateAIComment()">Generer med KI</button>
+        <button class="ghost" onclick="saveGeneralComment()">Lagre kommentar</button>
+      </div>
+      <div id="aiStatus" class="ai-status"></div>
+      <label>Redigerbar kommentar</label>
+      <textarea id="generalComment" class="ai-output" placeholder="Den genererte kommentaren kommer her. Du kan redigere teksten fritt.">${esc(st?.generalComment||'')}</textarea>
+      <div class="ai-note">Kontroller alltid KI-forslaget før det brukes som vurdering. Funksjonen er laget for å lage et utkast basert på dine registreringer, ikke for å ta vurderingsbeslutningen for deg.</div>
+    </div>
+    ${historyHtml}`;
+}
+
+function buildAIPayload(){
+  let c=histClass.value,id=+histStudent.value;
+  if(!c||!id)return null;
+  let records=[];
+  data.labs.filter(l=>l.cls===c).forEach(l=>{
+    let r=(l.students||[]).find(s=>s.id===id);
+    if(r)records.push({
+      date:l.date,
+      activity:l.name,
+      status:r.status||'',
+      observations:r.tags||[],
+      teacherNote:r.note||'',
+      reportComments:r.reportTags||[],
+      reportNote:r.reportNote||''
+    });
+  });
+  return {studentId:`Elev ${id}`,records};
+}
+
+async function generateAIComment(){
+  let payload=buildAIPayload(),status=document.getElementById('aiStatus'),btn=document.getElementById('generateAiBtn');
+  if(!payload||!payload.records.length){status.textContent='Det finnes ingen registrerte observasjoner å lage kommentar fra.';return}
+  status.textContent='Lager forslag…';btn.disabled=true;
+  try{
+    let res=await fetch('/.netlify/functions/generate-comment',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    let json=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(json.error||'KI-tjenesten svarte med en feil.');
+    document.getElementById('generalComment').value=json.comment||'';
+    status.textContent='Forslaget er klart. Les gjennom og rediger før du lagrer.';
+  }catch(err){
+    status.textContent='Kunne ikke kontakte KI-funksjonen. Kontroller at Netlify-funksjonen og OPENAI_API_KEY er satt opp.';
+    console.error(err);
+  }finally{btn.disabled=false}
+}
+
+function saveGeneralComment(){
+  let c=histClass.value,id=+histStudent.value,st=(data.classes[c]||[]).find(s=>s.id===id);
+  if(!st)return;
+  st.generalComment=(document.getElementById('generalComment')?.value||'').trim();
+  persist();
+  let status=document.getElementById('aiStatus');if(status)status.textContent='Kommentaren er lagret lokalt.';
 }
 function renderRecent(){recent.innerHTML=data.labs.length?data.labs.slice(0,8).map(l=>`<div class="listrow"><strong>${esc(l.cls)}</strong><span><strong>${esc(l.name)}</strong><br><span class="muted">${esc(l.date)}</span></span><span>${l.students.filter(s=>s.status==='Fravær').length} fravær</span></div>`).join(''):'<div class="empty">Ingen timenotater opprettet.</div>'}
 function renderStats(){sClasses.textContent=classes().length;sLabs.textContent=data.labs.length;sObs.textContent=data.labs.reduce((n,l)=>n+l.students.reduce((m,s)=>m+(s.tags||[]).length+(s.note?1:0)+(s.reportTags||[]).length+(s.reportNote?1:0),0),0)}

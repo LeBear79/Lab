@@ -1,0 +1,23 @@
+NATURFAG LABB v1.3 – KI-OPPSETT
+
+Filer:
+- index.html
+- netlify.toml
+- netlify/functions/generate-comment.js
+
+Slik setter du opp KI-funksjonen på Netlify:
+1. Last opp/legg hele innholdet i denne mappen i GitHub-repositoriet for appen.
+2. I Netlify: åpne nettstedet -> Site configuration -> Environment variables.
+3. Opprett variabelen:
+   OPENAI_API_KEY = din OpenAI API-nøkkel
+4. Valgfritt kan du opprette:
+   OPENAI_MODEL = gpt-5-mini
+5. Deploy nettstedet på nytt.
+
+VIKTIG:
+- Ikke skriv API-nøkkelen inn i index.html eller generate-comment.js.
+- Appen sender ikke elevnavnet til KI-funksjonen. Den sender kun elevnummer/pseudonym og registrerte observasjoner.
+- Kontroller alltid KI-genererte vurderingstekster før de brukes.
+- Avklar bruk av ekstern KI/API og behandling av elevdata med skolens/kommunens personvern- og IT-rutiner før funksjonen tas i ordinær bruk.
+
+Data som allerede finnes i v1.2 migreres automatisk til v1.3 i samme nettleser.
