@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Naturfag Labb v1.6.2</title>
+<title>LabNotes v1.7</title>
 <style>
 
 :root{
@@ -516,6 +516,26 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
   }
 }
 
+
+/* v1.7 – elevsøk */
+.student-search-wrap{
+  margin:8px 0 12px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.student-search-wrap input{
+  width:260px;
+  max-width:100%;
+  padding:7px 10px;
+  font-size:.8rem;
+}
+.student-search-meta{
+  font-size:.74rem;
+  color:var(--muted);
+}
+
 </style>
 </head>
 <body>
@@ -531,11 +551,11 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
         </svg>
       </div>
       <div>
-        <h1>Naturfag Labb</h1>
-        <div class="subtitle">Rask registrering av observasjoner</div>
+        <h1>LabNotes</h1>
+        <div class="subtitle">Rask registrering av observasjoner og timenotater</div>
       </div>
     </div>
-    <div class="version">v1.6.2</div>
+    <div class="version">v1.7</div>
   </div>
 </header>
 <main>
@@ -555,8 +575,8 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
 
 <section id="labber" class="panel">
   <div class="grid two">
-    <div class="card"><h2>Opprett labb</h2><label>Klasse</label><select id="labClass"></select><label>Navn på labb</label><input id="labName" placeholder="f.eks. Mikroskopering av løkceller"><label>Dato</label><input id="labDate" type="date"><button class="primary" onclick="createLab()">Opprett labb</button></div>
-    <div class="card"><h2>Velg labb</h2><select id="labSelect" onchange="renderLab()"></select><button class="primary danger" onclick="deleteLab()">Slett valgt labb</button></div>
+    <div class="card"><h2>Opprett lab</h2><label>Klasse</label><select id="labClass"></select><label>Navn på lab</label><input id="labName" placeholder="f.eks. Mikroskopering av løkceller"><label>Dato</label><input id="labDate" type="date"><button class="primary" onclick="createLab()">Opprett lab</button></div>
+    <div class="card"><h2>Velg lab</h2><select id="labSelect" onchange="renderLab()"></select><button class="primary danger" onclick="deleteLab()">Slett valgt lab</button></div>
   </div>
 
   <div class="card">
@@ -587,9 +607,9 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
 
   <div class="card">
 <div class="section-title"><h2>Registrering</h2><span class="hint">Ett trykk = registrert</span></div>
-<div class="mode-switch">
-<button id="modeElevBtn" class="active" onclick="setRegistrationMode('elev')">Elevmodus</button>
-<button id="modeQuickBtn" onclick="setRegistrationMode('quick')">Hurtigmodus</button>
+<div class="student-search-wrap">
+  <input id="studentSearch" type="search" placeholder="Søk etter elev..." oninput="renderLab()">
+  <span id="studentSearchMeta" class="student-search-meta"></span>
 </div>
 <div id="activeLab"></div>
 </div>
@@ -626,7 +646,7 @@ const DEFAULT_REPORT_COMMENTS=[
 
 function loadData(){
   let d=null;
-  for(const key of ['naturfag_labb_v1_6_2','naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
+  for(const key of ['labnotes_v1_7','naturfag_labb_v1_6_2','naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
     if(d)break;
     try{d=JSON.parse(localStorage.getItem(key))}catch(e){}
   }
@@ -644,13 +664,11 @@ function loadData(){
   return d;
 }
 let data=loadData();
-let registrationMode='elev';
-let selectedQuickCriterion='';
 let openReportStudentIndex=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function jsq(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ')}
-function persist(){localStorage.setItem('naturfag_labb_v1_6_2',JSON.stringify(data))}
+function persist(){localStorage.setItem('labnotes_v1_7',JSON.stringify(data))}
 function save(){persist();renderAll()}
 function classes(){return Object.keys(data.classes).sort((a,b)=>a.localeCompare(b,'nb'))}
 function fill(id,vals,ph='Velg...'){
@@ -684,13 +702,13 @@ function renderStudents(){
 
 function createLab(){
   let c=labClass.value,n=labName.value.trim(),d=labDate.value||new Date().toISOString().slice(0,10);
-  if(!c||!n)return alert('Velg klasse og skriv inn navn på labben.');
+  if(!c||!n)return alert('Velg klasse og skriv inn navn på laben.');
   if(!(data.classes[c]||[]).length)return alert('Legg inn elevliste først.');
   data.labs.unshift({id:Date.now(),cls:c,name:n,date:d,students:data.classes[c].map(s=>({id:s.id,name:s.name,status:'Gjennomført',tags:[],note:'',reportTags:[],reportNote:''}))});
   labName.value='';save();
   setTimeout(()=>{labSelect.value=String(data.labs[0].id);renderLab()},0);
 }
-function renderLabSelect(){fill('labSelect',data.labs.map(l=>({value:String(l.id),label:`${l.cls} · ${l.name} · ${l.date}`})),'Velg labb')}
+function renderLabSelect(){fill('labSelect',data.labs.map(l=>({value:String(l.id),label:`${l.cls} · ${l.name} · ${l.date}`})),'Velg lab')}
 
 function toggleObservation(labId,studentIndex,criterion,checked){
   let l=data.labs.find(x=>x.id===labId);if(!l)return;
@@ -730,31 +748,17 @@ function toggleReportTag(labId,studentIndex,comment){
   renderHistory();
 }
 function reportNote(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].reportNote=v.trim();persist();renderStats();renderHistory()}
-function setRegistrationMode(mode){
-  registrationMode=mode;
-  document.getElementById('modeElevBtn')?.classList.toggle('active',mode==='elev');
-  document.getElementById('modeQuickBtn')?.classList.toggle('active',mode==='quick');
-  renderLab();
-}
-function setQuickCriterion(v){selectedQuickCriterion=v;renderLab()}
-function toggleQuickStudent(labId,studentIndex){
-  let l=data.labs.find(x=>x.id===labId);if(!l||!selectedQuickCriterion)return;
-  let a=l.students[studentIndex].tags||(l.students[studentIndex].tags=[]),p=a.indexOf(selectedQuickCriterion);
-  p>=0?a.splice(p,1):a.push(selectedQuickCriterion);persist();renderLab();renderStats();renderHistory();
-}
-function renderQuickMode(l){
-  if(!data.criteria.length)return '<div class="empty">Legg til minst én observasjon først.</div>';
-  if(!selectedQuickCriterion||!data.criteria.includes(selectedQuickCriterion))selectedQuickCriterion=data.criteria[0];
-  let options=data.criteria.map(c=>`<option value="${esc(c)}" ${c===selectedQuickCriterion?'selected':''}>${esc(c)}</option>`).join('');
-  let students=l.students.map((s,i)=>{
-    let active=(s.tags||[]).includes(selectedQuickCriterion);
-    return `<div class="quick-student ${active?'active':''}" onclick="toggleQuickStudent(${l.id},${i})"><span class="quick-check">${active?'✓':''}</span><div><strong>${esc(s.name)}</strong><div class="student-id">Elev ${s.id}</div></div></div>`;
-  }).join('');
-  return `<div class="quick-card"><label>Registrer observasjon</label><select onchange="setQuickCriterion(this.value)">${options}</select><div class="hint" style="margin-top:7px">Velg én observasjon og trykk på alle elevene den gjelder for.</div></div><div class="quick-list">${students}</div>`;
-}
+
+
+
+
 function renderElevMode(l){
   let head=data.criteria.map(c=>`<th title="${esc(c)}">${esc(c)}</th>`).join('');
-  let rows=l.students.map((s,i)=>{
+  let q=(document.getElementById('studentSearch')?.value||'').trim().toLowerCase();
+  let filtered=l.students.map((s,i)=>({s,i})).filter(({s})=>!q||String(s.name||'').toLowerCase().includes(q));
+  let meta=document.getElementById('studentSearchMeta');
+  if(meta)meta.textContent=q?`${filtered.length} av ${l.students.length} elever`:`${l.students.length} elever`;
+  let rows=filtered.map(({s,i})=>{
     s.tags||=[];s.reportTags||=[];s.reportNote=s.reportNote||'';if(!s.status)s.status='Gjennomført';
     let checks=data.criteria.map(c=>`<td><input class="check" type="checkbox" ${s.tags.includes(c)?'checked':''} onchange="toggleObservation(${l.id},${i},'${jsq(c)}',this.checked)"></td>`).join('');
     let reportChips=data.reportComments.map(c=>`<button type="button" class="report-chip ${s.reportTags.includes(c)?'active':''}" onclick="toggleReportTag(${l.id},${i},'${jsq(c)}')">${esc(c)}</button>`).join('');
@@ -774,8 +778,8 @@ function renderElevMode(l){
 function renderLab(){
   let id=+labSelect.value,l=data.labs.find(x=>x.id===id);
   if(!l){activeLab.innerHTML='<div class="empty">Velg et timenotat.</div>';return}
-  activeLab.innerHTML=`<div class="toolbar"><div class="toolbar-left"><div><strong>${esc(l.name)}</strong><div class="muted">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class="toolbar-right"><span class="hint">${l.students.length} elever</span></div></div>`+(registrationMode==='quick'?renderQuickMode(l):renderElevMode(l));
-  if(registrationMode==='elev' && openReportStudentIndex!==null){
+  activeLab.innerHTML=`<div class="toolbar"><div class="toolbar-left"><div><strong>${esc(l.name)}</strong><div class="muted">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class="toolbar-right"><span class="hint">${l.students.length} elever</span></div></div>`+renderElevMode(l);
+  if(openReportStudentIndex!==null){
     setTimeout(()=>{let r=document.getElementById('reportRow'+openReportStudentIndex);if(r)r.style.display='table-row'},0);
   }
 }
@@ -840,7 +844,7 @@ function moveReportComment(i,dir){
   persist();renderReportComments();renderLab();
 }
 
-function deleteLab(){let id=+labSelect.value;if(!id)return;if(confirm('Slette denne labben?')){data.labs=data.labs.filter(x=>x.id!==id);save()}}
+function deleteLab(){let id=+labSelect.value;if(!id)return;if(confirm('Slette denne laben?')){data.labs=data.labs.filter(x=>x.id!==id);save()}}
 function updateHistStudents(){let c=histClass.value;fill('histStudent',(data.classes[c]||[]).map(s=>({value:String(s.id),label:`Elev ${s.id} · ${s.name}`})),'Velg elev');renderHistory()}
 function renderHistory(){
   let c=histClass.value,id=+histStudent.value;
