@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>LabNotes v1.7</title>
+<title>LabNotes v1.7.1</title>
 <style>
 
 :root{
@@ -536,6 +536,23 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
   color:var(--muted);
 }
 
+
+/* v1.7.1 – kompakt registreringsoppsett */
+.registration-setup-collapsed{display:none}
+.registration-setup-open{display:block}
+.registration-title-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.setup-toggle-btn{
+  padding:7px 11px !important;
+  font-size:.78rem !important;
+  min-height:auto !important;
+}
+
 </style>
 </head>
 <body>
@@ -555,7 +572,7 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
         <div class="subtitle">Rask registrering av observasjoner og timenotater</div>
       </div>
     </div>
-    <div class="version">v1.7</div>
+    <div class="version">v1.7.1</div>
   </div>
 </header>
 <main>
@@ -580,7 +597,8 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
   </div>
 
   <div class="card">
-    <div class="section-title"><h2>Vurderingskriterier</h2><button class="small" onclick="toggleCriteria()">Rediger kriterier</button></div>
+    <div id="registrationSetup" class="registration-setup-collapsed">
+<div class="section-title"><h2>Vurderingskriterier</h2><button class="small" onclick="toggleCriteria()">Rediger kriterier</button></div>
     <div class="hint">Disse kriteriene vises som kolonner i registreringslisten. Du kan legge til, endre eller fjerne dem.</div>
     <div id="criteriaPreview" style="margin-top:8px"></div>
     <div id="criteriaEditor" style="display:none;margin-top:12px">
@@ -606,7 +624,9 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
   </div>
 
   <div class="card">
-<div class="section-title"><h2>Registrering</h2><span class="hint">Ett trykk = registrert</span></div>
+
+</div>
+<div class="section-title"><div class="registration-title-row"><h2>Registrering</h2><button class="secondary setup-toggle-btn" onclick="toggleRegistrationSetup()">⚙ Registreringsoppsett</button></div><span class="hint">Ett trykk = registrert</span></div>
 <div class="student-search-wrap">
   <input id="studentSearch" type="search" placeholder="Søk etter elev..." oninput="renderLab()">
   <span id="studentSearchMeta" class="student-search-meta"></span>
@@ -646,7 +666,7 @@ const DEFAULT_REPORT_COMMENTS=[
 
 function loadData(){
   let d=null;
-  for(const key of ['labnotes_v1_7','naturfag_labb_v1_6_2','naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
+  for(const key of ['labnotes_v1_7_1','labnotes_v1_7','naturfag_labb_v1_6_2','naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
     if(d)break;
     try{d=JSON.parse(localStorage.getItem(key))}catch(e){}
   }
@@ -668,7 +688,7 @@ let openReportStudentIndex=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function jsq(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ')}
-function persist(){localStorage.setItem('labnotes_v1_7',JSON.stringify(data))}
+function persist(){localStorage.setItem('labnotes_v1_7_1',JSON.stringify(data))}
 function save(){persist();renderAll()}
 function classes(){return Object.keys(data.classes).sort((a,b)=>a.localeCompare(b,'nb'))}
 function fill(id,vals,ph='Velg...'){
@@ -946,6 +966,17 @@ function renderStats(){sClasses.textContent=classes().length;sLabs.textContent=d
 function refresh(){let c=classes();['studentClass','labClass','histClass'].forEach(id=>fill(id,c,'Velg klasse'));updateHistStudents()}
 function renderAll(){refresh();renderClasses();renderStudents();renderLabSelect();renderLab();renderRecent();renderStats();renderCriteria();renderReportComments()}
 labDate.value=new Date().toISOString().slice(0,10);renderAll();
+
+function toggleRegistrationSetup(){
+  const el=document.getElementById('registrationSetup');
+  if(!el)return;
+  const open=el.classList.toggle('registration-setup-open');
+  el.classList.toggle('registration-setup-collapsed',!open);
+  const btn=document.querySelector('.setup-toggle-btn');
+  if(btn)btn.textContent=open?'Lukk registreringsoppsett':'⚙ Registreringsoppsett';
+  if(open)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 </script>
 </body>
 </html>
