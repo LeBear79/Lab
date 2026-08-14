@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Naturfag Labb v1.6</title>
+<title>Naturfag Labb v1.6.1</title>
 <style>
 
 :root{
@@ -442,7 +442,7 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
         <div class="subtitle">Rask registrering av observasjoner</div>
       </div>
     </div>
-    <div class="version">v1.6</div>
+    <div class="version">v1.6.1</div>
   </div>
 </header>
 <main>
@@ -533,7 +533,7 @@ const DEFAULT_REPORT_COMMENTS=[
 
 function loadData(){
   let d=null;
-  for(const key of ['naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
+  for(const key of ['naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
     if(d)break;
     try{d=JSON.parse(localStorage.getItem(key))}catch(e){}
   }
@@ -557,7 +557,7 @@ let openReportStudentIndex=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function jsq(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ')}
-function persist(){localStorage.setItem('naturfag_labb_v1_6',JSON.stringify(data))}
+function persist(){localStorage.setItem('naturfag_labb_v1_6_1',JSON.stringify(data))}
 function save(){persist();renderAll()}
 function classes(){return Object.keys(data.classes).sort((a,b)=>a.localeCompare(b,'nb'))}
 function fill(id,vals,ph='Velg...'){
@@ -569,7 +569,9 @@ function fill(id,vals,ph='Velg...'){
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');document.getElementById(b.dataset.tab).classList.add('active');
+  b.classList.add('active');
+  document.getElementById(b.dataset.tab).classList.add('active');
+  if(b.dataset.tab==='elever')renderHistory();
 });
 
 function addClass(){let n=className.value.trim();if(!n)return alert('Skriv inn klasse.');data.classes[n]??=[];className.value='';save()}
@@ -601,11 +603,11 @@ function toggleObservation(labId,studentIndex,criterion,checked){
   let l=data.labs.find(x=>x.id===labId);if(!l)return;
   let a=l.students[studentIndex].tags||(l.students[studentIndex].tags=[]),p=a.indexOf(criterion);
   if(checked&&p<0)a.push(criterion);if(!checked&&p>=0)a.splice(p,1);
-  persist();renderStats();
+  persist();renderStats();renderHistory();
 }
-function setStatus(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].status=v;persist();renderRecent()}
+function setStatus(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].status=v;persist();renderRecent();renderHistory()}
 function toggleNoteRow(i){let r=document.getElementById('noteRow'+i);if(r)r.style.display=r.style.display==='none'?'table-row':'none'}
-function note(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].note=v.trim();persist();renderStats()}
+function note(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].note=v.trim();persist();renderStats();renderHistory()}
 function toggleReportRow(i){
   let r=document.getElementById('reportRow'+i);
   if(!r)return;
@@ -632,8 +634,9 @@ function toggleReportTag(labId,studentIndex,comment){
     reportButton.textContent=has?'Labrapport ✓':'Labrapport';
   }
   renderStats();
+  renderHistory();
 }
-function reportNote(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].reportNote=v.trim();persist();renderStats()}
+function reportNote(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].reportNote=v.trim();persist();renderStats();renderHistory()}
 function setRegistrationMode(mode){
   registrationMode=mode;
   document.getElementById('modeElevBtn')?.classList.toggle('active',mode==='elev');
@@ -644,7 +647,7 @@ function setQuickCriterion(v){selectedQuickCriterion=v;renderLab()}
 function toggleQuickStudent(labId,studentIndex){
   let l=data.labs.find(x=>x.id===labId);if(!l||!selectedQuickCriterion)return;
   let a=l.students[studentIndex].tags||(l.students[studentIndex].tags=[]),p=a.indexOf(selectedQuickCriterion);
-  p>=0?a.splice(p,1):a.push(selectedQuickCriterion);persist();renderLab();renderStats();
+  p>=0?a.splice(p,1):a.push(selectedQuickCriterion);persist();renderLab();renderStats();renderHistory();
 }
 function renderQuickMode(l){
   if(!data.criteria.length)return '<div class="empty">Legg til minst én observasjon først.</div>';
