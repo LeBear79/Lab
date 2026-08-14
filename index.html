@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Naturfag Labb v1.5</title>
+<title>Naturfag Labb v1.6</title>
 <style>
 
 :root{
@@ -367,6 +367,35 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
 .observation-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0 14px}
 .obs-summary-row{display:flex;justify-content:space-between;gap:10px;padding:9px 11px;border-radius:10px;background:#f4f8f6;border:1px solid #e1ebe7}
 .timeline-item{margin:9px 0;padding:11px 12px;border-left:4px solid var(--primary);border-radius:10px;background:#f9fbfa}
+
+/* v1.6 – mer kompakt arbeidsflate */
+.matrix th,.matrix td{padding:5px 6px;font-size:.8rem}
+.matrix th{min-width:84px;max-width:108px;font-size:.72rem;line-height:1.15}
+.matrix .student-col{min-width:155px;max-width:180px}
+.matrix .status-col{min-width:105px}
+.student-name{font-size:.86rem}
+.student-id{font-size:.68rem}
+.check{width:25px;height:25px;border-radius:7px}
+.check:checked::after{font-size:15px}
+.note-btn,.report-btn{padding:5px 7px;font-size:.74rem}
+.row-count{min-width:24px;height:24px;font-size:.7rem}
+.student-actions{gap:4px}
+.matrix-wrap{max-height:74vh}
+.report-panel,.report-drawer{padding:10px}
+.report-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.report-chip{padding:6px 8px;font-size:.75rem;line-height:1.2;border-radius:9px}
+.report-heading{margin-bottom:7px}
+.report-panel textarea,.report-drawer textarea{min-height:68px}
+.quick-card{padding:10px}
+.quick-student{padding:7px 9px}
+.quick-check{width:21px;height:21px}
+@media(max-width:900px){.report-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+  .report-options{grid-template-columns:1fr}
+  .matrix th,.matrix td{padding:4px 5px}
+  .matrix .student-col{min-width:135px;max-width:150px}
+}
+
 @media(max-width:760px){.quick-list{grid-template-columns:1fr}.elev-summary-grid{grid-template-columns:repeat(2,1fr)}.observation-summary{grid-template-columns:1fr}.observation-item{grid-template-columns:auto 1fr auto auto}.observation-item .delete-observation{grid-column:4}}
 
 @media(max-width:760px){
@@ -413,7 +442,7 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
         <div class="subtitle">Rask registrering av observasjoner</div>
       </div>
     </div>
-    <div class="version">v1.5</div>
+    <div class="version">v1.6</div>
   </div>
 </header>
 <main>
@@ -504,7 +533,7 @@ const DEFAULT_REPORT_COMMENTS=[
 
 function loadData(){
   let d=null;
-  for(const key of ['naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
+  for(const key of ['naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
     if(d)break;
     try{d=JSON.parse(localStorage.getItem(key))}catch(e){}
   }
@@ -524,10 +553,11 @@ function loadData(){
 let data=loadData();
 let registrationMode='elev';
 let selectedQuickCriterion='';
+let openReportStudentIndex=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function jsq(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ')}
-function persist(){localStorage.setItem('naturfag_labb_v1_5',JSON.stringify(data))}
+function persist(){localStorage.setItem('naturfag_labb_v1_6',JSON.stringify(data))}
 function save(){persist();renderAll()}
 function classes(){return Object.keys(data.classes).sort((a,b)=>a.localeCompare(b,'nb'))}
 function fill(id,vals,ph='Velg...'){
@@ -576,12 +606,32 @@ function toggleObservation(labId,studentIndex,criterion,checked){
 function setStatus(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].status=v;persist();renderRecent()}
 function toggleNoteRow(i){let r=document.getElementById('noteRow'+i);if(r)r.style.display=r.style.display==='none'?'table-row':'none'}
 function note(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].note=v.trim();persist();renderStats()}
-function toggleReportRow(i){let r=document.getElementById('reportRow'+i);if(r)r.style.display=r.style.display==='none'?'table-row':'none'}
+function toggleReportRow(i){
+  let r=document.getElementById('reportRow'+i);
+  if(!r)return;
+  let willOpen=r.style.display==='none';
+  document.querySelectorAll('[id^="reportRow"]').forEach(x=>x.style.display='none');
+  if(willOpen){r.style.display='table-row';openReportStudentIndex=i;}
+  else{openReportStudentIndex=null;}
+}
 function toggleReportTag(labId,studentIndex,comment){
   let l=data.labs.find(x=>x.id===labId);if(!l)return;
   let s=l.students[studentIndex],a=s.reportTags||(s.reportTags=[]),p=a.indexOf(comment);
-  p>=0?a.splice(p,1):a.push(comment);persist();renderLab();
-  setTimeout(()=>{let r=document.getElementById('reportRow'+studentIndex);if(r)r.style.display='table-row'},0);
+  p>=0?a.splice(p,1):a.push(comment);
+  persist();
+  let row=document.getElementById('reportRow'+studentIndex);
+  if(row){
+    row.querySelectorAll('.report-chip').forEach(btn=>{
+      if(btn.textContent.trim()===comment)btn.classList.toggle('active',a.includes(comment));
+    });
+  }
+  let reportButton=row?.previousElementSibling?.querySelector('.report-btn');
+  if(reportButton){
+    let has=(s.reportTags||[]).length||s.reportNote;
+    reportButton.classList.toggle('has',!!has);
+    reportButton.textContent=has?'Labrapport ✓':'Labrapport';
+  }
+  renderStats();
 }
 function reportNote(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.students[i].reportNote=v.trim();persist();renderStats()}
 function setRegistrationMode(mode){
@@ -629,6 +679,9 @@ function renderLab(){
   let id=+labSelect.value,l=data.labs.find(x=>x.id===id);
   if(!l){activeLab.innerHTML='<div class="empty">Velg et timenotat.</div>';return}
   activeLab.innerHTML=`<div class="toolbar"><div class="toolbar-left"><div><strong>${esc(l.name)}</strong><div class="muted">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class="toolbar-right"><span class="hint">${l.students.length} elever</span></div></div>`+(registrationMode==='quick'?renderQuickMode(l):renderElevMode(l));
+  if(registrationMode==='elev' && openReportStudentIndex!==null){
+    setTimeout(()=>{let r=document.getElementById('reportRow'+openReportStudentIndex);if(r)r.style.display='table-row'},0);
+  }
 }
 function toggleCriteria(){
   let e=document.getElementById('criteriaEditor');e.style.display=e.style.display==='none'?'block':'none';renderCriteria()
