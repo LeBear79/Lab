@@ -553,6 +553,27 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
   min-height:auto !important;
 }
 
+
+/* Revidert v1.7.1 – separate registreringsoppsett */
+.registration-settings-buttons{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:10px 0 12px;
+}
+.registration-settings-buttons .setup-toggle-btn{margin:0}
+.registration-setup-collapsed{display:none}
+.registration-setup-open{display:block}
+.setup-panel{
+  margin:0 0 12px;
+}
+.setup-panel-inner{
+  border:1px solid var(--border);
+  background:var(--surface-soft);
+  border-radius:13px;
+  padding:12px;
+}
+
 </style>
 </head>
 <body>
@@ -597,42 +618,60 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
   </div>
 
   <div class="card">
-    <div id="registrationSetup" class="registration-setup-collapsed">
-<div class="section-title"><h2>Vurderingskriterier</h2><button class="small" onclick="toggleCriteria()">Rediger kriterier</button></div>
-    <div class="hint">Disse kriteriene vises som kolonner i registreringslisten. Du kan legge til, endre eller fjerne dem.</div>
-    <div id="criteriaPreview" style="margin-top:8px"></div>
-    <div id="criteriaEditor" style="display:none;margin-top:12px">
-      <div class="criteria-list" id="criteriaList"></div>
-      <div class="grid two" style="margin-top:10px"><input id="newCriterion" placeholder="Nytt kriterium"><button class="primary" style="margin-top:0" onclick="addCriterion()">Legg til kriterium</button></div>
-      <div class="hint" style="margin-top:8px">Når et kriterium slettes her, beholdes tidligere registreringer i elevhistorikken.</div>
+    <div class="section-title">
+      <h2>Registrering</h2>
+      <span class="hint">Ett trykk = registrert</span>
     </div>
-  </div>
 
+    <div class="registration-settings-buttons">
+      <button class="small setup-toggle-btn" id="criteriaSetupBtn" onclick="toggleCriteriaSetup()">⚙ Vurderingskriterier</button>
+      <button class="small setup-toggle-btn" id="reportSetupBtn" onclick="toggleReportSetup()">⚙ Labrapport-kommentarer</button>
+    </div>
 
-  <div class="card">
-    <div class="section-title"><h2>Labrapport-kommentarer</h2><button class="small" onclick="toggleReportComments()">Rediger kommentarer</button></div>
-    <div class="hint">Disse kommentarene kan hukes av raskt på hver elevs labrapport. Du kan legge til, endre og fjerne alternativer.</div>
-    <div id="reportCommentsPreview" style="margin-top:8px"></div>
-    <div id="reportCommentsEditor" style="display:none;margin-top:12px">
-      <div class="criteria-list" id="reportCommentsList"></div>
-      <div class="grid two" style="margin-top:10px">
-        <input id="newReportComment" placeholder="Ny labrapport-kommentar">
-        <button class="primary" style="margin-top:0" onclick="addReportComment()">Legg til kommentar</button>
+    <div id="criteriaSetupPanel" class="registration-setup-collapsed setup-panel">
+      <div class="setup-panel-inner">
+        <div class="section-title">
+          <h3>Vurderingskriterier</h3>
+          <button class="small" onclick="toggleCriteria()">Rediger kriterier</button>
+        </div>
+        <div class="hint">Disse kriteriene vises som kolonner i registreringslisten. Du kan legge til, endre, slette og flytte dem.</div>
+        <div id="criteriaPreview" style="margin-top:8px"></div>
+        <div id="criteriaEditor" style="display:none;margin-top:12px">
+          <div class="criteria-list" id="criteriaList"></div>
+          <div class="grid two" style="margin-top:10px">
+            <input id="newCriterion" placeholder="Nytt kriterium">
+            <button class="primary" style="margin-top:0" onclick="addCriterion()">Legg til kriterium</button>
+          </div>
+          <div class="hint" style="margin-top:8px">Når et kriterium slettes her, beholdes tidligere registreringer i elevhistorikken.</div>
+        </div>
       </div>
-      <div class="hint" style="margin-top:8px">Når et alternativ fjernes her, beholdes kommentarer som allerede er registrert på tidligere labrapporter.</div>
     </div>
+
+    <div id="reportSetupPanel" class="registration-setup-collapsed setup-panel">
+      <div class="setup-panel-inner">
+        <div class="section-title">
+          <h3>Labrapport-kommentarer</h3>
+          <button class="small" onclick="toggleReportComments()">Rediger kommentarer</button>
+        </div>
+        <div class="hint">Disse kommentarene kan velges på hver elevs labrapport. Du kan legge til, endre og fjerne alternativer.</div>
+        <div id="reportCommentsPreview" style="margin-top:8px"></div>
+        <div id="reportCommentsEditor" style="display:none;margin-top:12px">
+          <div class="criteria-list" id="reportCommentsList"></div>
+          <div class="grid two" style="margin-top:10px">
+            <input id="newReportComment" placeholder="Ny labrapport-kommentar">
+            <button class="primary" style="margin-top:0" onclick="addReportComment()">Legg til kommentar</button>
+          </div>
+          <div class="hint" style="margin-top:8px">Når et alternativ fjernes her, beholdes kommentarer som allerede er registrert på tidligere labrapporter.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="student-search-wrap">
+      <input id="studentSearch" type="search" placeholder="Søk etter elev..." oninput="renderLab()">
+      <span id="studentSearchMeta" class="student-search-meta"></span>
+    </div>
+    <div id="activeLab"></div>
   </div>
-
-  <div class="card">
-
-</div>
-<div class="section-title"><div class="registration-title-row"><h2>Registrering</h2><button class="secondary setup-toggle-btn" onclick="toggleRegistrationSetup()">⚙ Registreringsoppsett</button></div><span class="hint">Ett trykk = registrert</span></div>
-<div class="student-search-wrap">
-  <input id="studentSearch" type="search" placeholder="Søk etter elev..." oninput="renderLab()">
-  <span id="studentSearchMeta" class="student-search-meta"></span>
-</div>
-<div id="activeLab"></div>
-</div>
 </section>
 
 <section id="elever" class="panel"><div class="card"><h2>Elevside</h2><div class="grid two"><div><label>Klasse</label><select id="histClass" onchange="updateHistStudents()"></select></div><div><label>Elev</label><select id="histStudent" onchange="renderHistory()"></select></div></div><div id="history"></div></div></section>
@@ -967,14 +1006,29 @@ function refresh(){let c=classes();['studentClass','labClass','histClass'].forEa
 function renderAll(){refresh();renderClasses();renderStudents();renderLabSelect();renderLab();renderRecent();renderStats();renderCriteria();renderReportComments()}
 labDate.value=new Date().toISOString().slice(0,10);renderAll();
 
-function toggleRegistrationSetup(){
-  const el=document.getElementById('registrationSetup');
-  if(!el)return;
-  const open=el.classList.toggle('registration-setup-open');
-  el.classList.toggle('registration-setup-collapsed',!open);
-  const btn=document.querySelector('.setup-toggle-btn');
-  if(btn)btn.textContent=open?'Lukk registreringsoppsett':'⚙ Registreringsoppsett';
-  if(open)el.scrollIntoView({behavior:'smooth',block:'start'});
+
+
+
+function toggleCriteriaSetup(){
+  const panel=document.getElementById('criteriaSetupPanel');
+  const btn=document.getElementById('criteriaSetupBtn');
+  if(!panel)return;
+  const open=panel.classList.contains('registration-setup-collapsed');
+  panel.classList.toggle('registration-setup-collapsed',!open);
+  panel.classList.toggle('registration-setup-open',open);
+  if(btn)btn.textContent=open?'Lukk vurderingskriterier':'⚙ Vurderingskriterier';
+  if(open)renderCriteria();
+}
+
+function toggleReportSetup(){
+  const panel=document.getElementById('reportSetupPanel');
+  const btn=document.getElementById('reportSetupBtn');
+  if(!panel)return;
+  const open=panel.classList.contains('registration-setup-collapsed');
+  panel.classList.toggle('registration-setup-collapsed',!open);
+  panel.classList.toggle('registration-setup-open',open);
+  if(btn)btn.textContent=open?'Lukk labrapport-kommentarer':'⚙ Labrapport-kommentarer';
+  if(open)renderReportComments();
 }
 
 </script>
