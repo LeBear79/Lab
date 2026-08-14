@@ -396,6 +396,52 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
   .matrix .student-col{min-width:135px;max-width:150px}
 }
 
+
+/* Revidert v1.6.1 – tettere registreringsflate */
+#labber .card{padding:14px}
+#labber .toolbar{margin-bottom:8px}
+#labber .toolbar strong{font-size:.95rem}
+#labber .toolbar .muted,#labber .hint{font-size:.76rem}
+#labber .mode-switch{margin:6px 0 10px;gap:6px}
+#labber .mode-switch button{padding:7px 10px;font-size:.8rem}
+
+.matrix th,.matrix td{padding:4px 5px;font-size:.76rem}
+.matrix th{min-width:78px;max-width:98px;font-size:.68rem;line-height:1.12}
+.matrix .student-col{min-width:135px;max-width:155px}
+.matrix .status-col{min-width:90px!important;width:90px!important;max-width:100px!important}
+.matrix .status-col select{width:92px;padding:6px 22px 6px 7px;font-size:.72rem;border-radius:9px}
+.student-name{font-size:.82rem}
+.student-id{font-size:.64rem}
+.check{width:23px;height:23px;border-radius:7px}
+.check:checked::after{font-size:14px}
+.note-btn,.report-btn{padding:5px 6px;font-size:.7rem}
+.row-count{min-width:22px;height:22px;font-size:.66rem}
+.student-actions{gap:3px}
+.matrix-wrap{max-height:76vh}
+
+.quick-card{padding:9px}
+.quick-card label{font-size:.76rem}
+.quick-card select{padding:7px 9px;font-size:.78rem}
+.quick-student{padding:6px 8px}
+.quick-student strong{font-size:.8rem}
+.quick-check{width:20px;height:20px}
+
+.report-drawer{padding:9px}
+.report-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.report-chip{padding:5px 7px;font-size:.7rem;line-height:1.15;border-radius:8px}
+.report-drawer textarea{min-height:62px;font-size:.76rem}
+
+@media(max-width:900px){
+  .report-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .matrix th,.matrix td{padding:4px}
+  .matrix .student-col{min-width:125px;max-width:140px}
+  .matrix .status-col{min-width:84px!important;width:84px!important}
+  .matrix .status-col select{width:86px;font-size:.68rem}
+  .report-options{grid-template-columns:1fr}
+}
+
 @media(max-width:760px){.quick-list{grid-template-columns:1fr}.elev-summary-grid{grid-template-columns:repeat(2,1fr)}.observation-summary{grid-template-columns:1fr}.observation-item{grid-template-columns:auto 1fr auto auto}.observation-item .delete-observation{grid-column:4}}
 
 @media(max-width:760px){
