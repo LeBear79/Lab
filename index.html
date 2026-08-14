@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Naturfag Labb v1.6.1</title>
+<title>Naturfag Labb v1.6.2</title>
 <style>
 
 :root{
@@ -469,6 +469,53 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
   .tabs button{font-size:.74rem}
 }
 
+
+/* v1.6.2 – enda mer kompakt registreringsflate */
+#labber .matrix .status-col{
+  min-width:76px!important;
+  width:76px!important;
+  max-width:82px!important;
+  padding-left:3px;
+  padding-right:3px;
+}
+#labber .matrix .status-col select{
+  width:76px!important;
+  min-width:76px;
+  padding:4px 17px 4px 5px;
+  font-size:.66rem;
+  line-height:1.05;
+  border-radius:7px;
+}
+#labber .matrix th.status-col{
+  font-size:.65rem;
+}
+#labber .matrix th,
+#labber .matrix td{
+  padding-top:3px;
+  padding-bottom:3px;
+}
+#labber .matrix th{
+  font-size:.66rem;
+}
+#labber .student-name{font-size:.79rem}
+#labber .student-id{font-size:.61rem}
+#labber .check{width:21px;height:21px}
+#labber .check:checked::after{font-size:13px}
+
+@media(max-width:600px){
+  #labber .matrix .status-col{
+    min-width:70px!important;
+    width:70px!important;
+    max-width:74px!important;
+  }
+  #labber .matrix .status-col select{
+    width:70px!important;
+    min-width:70px;
+    padding:4px 15px 4px 4px;
+    font-size:.62rem;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -488,7 +535,7 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
         <div class="subtitle">Rask registrering av observasjoner</div>
       </div>
     </div>
-    <div class="version">v1.6.1</div>
+    <div class="version">v1.6.2</div>
   </div>
 </header>
 <main>
@@ -579,7 +626,7 @@ const DEFAULT_REPORT_COMMENTS=[
 
 function loadData(){
   let d=null;
-  for(const key of ['naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
+  for(const key of ['naturfag_labb_v1_6_2','naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
     if(d)break;
     try{d=JSON.parse(localStorage.getItem(key))}catch(e){}
   }
@@ -603,7 +650,7 @@ let openReportStudentIndex=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function jsq(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ')}
-function persist(){localStorage.setItem('naturfag_labb_v1_6_1',JSON.stringify(data))}
+function persist(){localStorage.setItem('naturfag_labb_v1_6_2',JSON.stringify(data))}
 function save(){persist();renderAll()}
 function classes(){return Object.keys(data.classes).sort((a,b)=>a.localeCompare(b,'nb'))}
 function fill(id,vals,ph='Velg...'){
