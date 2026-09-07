@@ -5,7 +5,6 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/labnotes-v181-assessment-scope.yml'
-      - 'index.html'
 
 permissions:
   contents: write
@@ -20,68 +19,35 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
-
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
           if '<title>LabNotes v1.8.1</title>' in text:
               print('Already upgraded')
               raise SystemExit(0)
-
           text=text.replace('<title>LabNotes v1.8</title>','<title>LabNotes v1.8.1</title>')
           text=text.replace('<div class="version">v1.8</div>','<div class="version">v1.8.1</div>')
           text=text.replace("for(const key of ['labnotes_v1_8','labnotes_v1_7_2'","for(const key of ['labnotes_v1_8_1','labnotes_v1_8','labnotes_v1_7_2'")
           text=text.replace("function persist(){localStorage.setItem('labnotes_v1_8',JSON.stringify(data))}","function persist(){localStorage.setItem('labnotes_v1_8_1',JSON.stringify(data))}")
-          text=text.replace("data.labs.unshift({id:Date.now(),cls:c,name:n,date:d,students:data.classes[c].map(s=>({id:s.id,name:s.name,status:'Gjennomført',tags:[],note:'',reportTags:[],reportNote:''}))});","data.labs.unshift({id:Date.now(),cls:c,name:n,date:d,assessmentScope:'lab',students:data.classes[c].map(s=>({id:s.id,name:s.name,status:'Gjennomført',tags:[],note:'',reportTags:[],reportNote:''}))});")
-
-          css='''\n/* v1.8.1 – velg hva som skal vurderes per timenotat */\n.assessment-scope-control{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-soft)}\n.assessment-scope-control label{margin:0;min-width:150px}\n.assessment-scope-control select{width:auto;min-width:230px;padding:7px 30px 7px 9px;font-size:.8rem}\n.student-detail-grid.single{grid-template-columns:1fr}\n@media(max-width:760px){.assessment-scope-control{align-items:stretch}.assessment-scope-control select{width:100%;min-width:0}}\n'''
-          text=text.replace('</style>',css+'\n</style>',1)
-
+          text=text.replace("data.labs.unshift({id:Date.now(),cls:c,name:n,date:d,students:","data.labs.unshift({id:Date.now(),cls:c,name:n,date:d,assessmentScope:'lab',students:")
+          css="\n.assessment-scope-control{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-soft)}\n.assessment-scope-control label{margin:0;min-width:150px}\n.assessment-scope-control select{width:auto;min-width:230px;padding:7px 30px 7px 9px;font-size:.8rem}\n.student-detail-grid.single{grid-template-columns:1fr}\n@media(max-width:760px){.assessment-scope-control{align-items:stretch}.assessment-scope-control select{width:100%;min-width:0}}\n"
+          text=text.replace('</style>',css+'</style>',1)
           marker='function renderElevMode(l){'
-          if marker not in text:
-              raise RuntimeError('renderElevMode not found')
-          setter="""function setAssessmentScope(labId,value){\n  let l=data.labs.find(x=>x.id===labId);if(!l)return;\n  l.assessmentScope=value||'lab';\n  persist();\n  renderLab();\n}\n\n"""
+          setter="function setAssessmentScope(labId,value){let l=data.labs.find(x=>x.id===labId);if(!l)return;l.assessmentScope=value||\'lab\';persist();renderLab();}\n"
           text=text.replace(marker,setter+marker,1)
-
-          start=text.index('function renderElevMode(l){')
-          end=text.index('function toggleCriteria(){',start)
-          new=r'''function renderElevMode(l){
-  let scope=l.assessmentScope||'lab';
-  let q=(document.getElementById('studentSearch')?.value||'').trim().toLowerCase();
-  let filtered=l.students.map((s,i)=>({s,i})).filter(({s})=>!q||String(s.name||'').toLowerCase().includes(q));
-  let meta=document.getElementById('studentSearchMeta');
-  if(meta)meta.textContent=q?`${filtered.length} av ${l.students.length} elever`:`${l.students.length} elever`;
-  let showObs=scope==='lab'||scope==='both',showReport=scope==='report'||scope==='both';
-  let rows=filtered.map(({s,i})=>{
-    s.tags||=[];s.reportTags||=[];s.reportNote=s.reportNote||'';s.note=s.note||'';if(!s.status)s.status='Gjennomført';
-    let isOpen=openStudentIndex===i;
-    let obsChips=data.criteria.map(c=>`<button type="button" class="observation-chip ${s.tags.includes(c)?'active':''}" onclick="toggleObservationTag(${l.id},${i},'${jsq(c)}')">${esc(c)}</button>`).join('');
-    let reportChips=data.reportComments.map(c=>`<button type="button" class="report-chip ${s.reportTags.includes(c)?'active':''}" onclick="toggleReportTag(${l.id},${i},'${jsq(c)}')">${esc(c)}</button>`).join('');
-    let reportHas=s.reportTags.length||s.reportNote;
-    let summaryCells='';
-    if(showObs)summaryCells+=`<td><span class="detail-count"><b>${s.tags.length}</b> observasjoner</span></td><td><span class="detail-count">${s.note?'Notat ✓':'–'}</span></td>`;
-    if(showReport)summaryCells+=`<td><span class="detail-count">${reportHas?'Labrapport ✓':'–'}</span></td>`;
-    let sections=[];
-    if(showObs)sections.push(`<section class="student-detail-section"><div class="report-heading"><strong>Timeobservasjoner</strong><span class="hint">Velg alle kriteriene som passer</span></div><div class="observation-options">${obsChips||'<span class="muted">Ingen vurderingskriterier er lagt inn.</span>'}</div><label>Eget notat</label><textarea oninput="note(${l.id},${i},this.value)" placeholder="Korte stikkord om eleven...">${esc(s.note)}</textarea></section>`);
-    if(showReport)sections.push(`<section class="student-detail-section"><div class="report-heading"><strong>Tilbakemelding på labrapport</strong><span class="hint">Velg alle kommentarene som passer</span></div><div class="report-options">${reportChips||'<span class="muted">Ingen labrapport-kommentarer er lagt inn.</span>'}</div><label>Egen kommentar</label><textarea oninput="reportNote(${l.id},${i},this.value)" placeholder="Kort individuell kommentar til labrapporten...">${esc(s.reportNote)}</textarea></section>`);
-    let colCount=2+(showObs?2:0)+(showReport?1:0);
-    return `<tr class="student-register-row ${isOpen?'is-open':''}"><td><button class="student-open-btn" onclick="toggleStudentRow(${i})"><div class="student-name">${esc(s.name)}</div><div class="student-id">Elev ${s.id} · ${isOpen?'Lukk':'Åpne'}</div></button></td><td class="compact-status"><select onclick="event.stopPropagation()" onchange="setStatus(${l.id},${i},this.value)"><option ${s.status==='Gjennomført'?'selected':''}>Gjennomført</option><option ${s.status==='Fravær'?'selected':''}>Fravær</option><option ${s.status==='Ikke gjennomført'?'selected':''}>Ikke gjennomført</option></select></td>${summaryCells}</tr>${isOpen?`<tr class="student-detail-row"><td colspan="${colCount}"><div class="student-detail"><div class="student-detail-grid ${sections.length===1?'single':''}">${sections.join('')}</div></div></td></tr>`:''}`;
-  }).join('');
-  let headers='<th>Elev</th><th>Status</th>'+(showObs?'<th>Observasjoner</th><th>Notat</th>':'')+(showReport?'<th>Labrapport</th>':'');
-  return `<div style="overflow:auto"><table class="student-register-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
-}
-function renderLab(){
-  let id=+labSelect.value,l=data.labs.find(x=>x.id===id);
-  if(!l){activeLab.innerHTML='<div class="empty">Velg et timenotat.</div>';return}
-  if(!l.assessmentScope)l.assessmentScope='lab';
-  let scopeControl=`<div class="assessment-scope-control"><div><label>Hva skal vurderes?</label><div class="hint">Valget gjelder hele dette timenotatet.</div></div><select onchange="setAssessmentScope(${l.id},this.value)"><option value="lab" ${l.assessmentScope==='lab'?'selected':''}>Lab / timeobservasjoner</option><option value="report" ${l.assessmentScope==='report'?'selected':''}>Labrapport</option><option value="both" ${l.assessmentScope==='both'?'selected':''}>Begge deler</option></select></div>`;
-  activeLab.innerHTML=`<div class="toolbar"><div class="toolbar-left"><div><strong>${esc(l.name)}</strong><div class="muted">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class="toolbar-right"><span class="hint">${l.students.length} elever</span></div></div>${scopeControl}`+renderElevMode(l);
-}
-'''
-          text=text[:start]+new+text[end:]
+          text=text.replace("function renderElevMode(l){\n  let q=", "function renderElevMode(l){\n  let scope=l.assessmentScope||'lab',showObs=scope==='lab'||scope==='both',showReport=scope==='report'||scope==='both';\n  let q=",1)
+          text=text.replace('<div class="student-detail-grid">','<div class="student-detail-grid ${scope===\'both\'?\'\':\'single\'}">',1)
+          text=text.replace('<section class="student-detail-section">\n          <div class="report-heading"><strong>Timeobservasjoner</strong>','<section class="student-detail-section" ${showObs?\'\':\'style="display:none"\'}>\n          <div class="report-heading"><strong>Timeobservasjoner</strong>',1)
+          first=text.find('<section class="student-detail-section" ${showObs')
+          second=text.find('<section class="student-detail-section">',first+1)
+          if second!=-1:
+              text=text[:second]+text[second:].replace('<section class="student-detail-section">','<section class="student-detail-section" ${showReport?\'\':\'style="display:none"\'}>',1)
+          old="activeLab.innerHTML=`<div class=\"toolbar\"><div class=\"toolbar-left\"><div><strong>${esc(l.name)}</strong><div class=\"muted\">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class=\"toolbar-right\"><span class=\"hint\">${l.students.length} elever</span></div></div>`+renderElevMode(l);"
+          new="if(!l.assessmentScope)l.assessmentScope='lab';let scopeControl=`<div class=\"assessment-scope-control\"><div><label>Hva skal vurderes?</label><div class=\"hint\">Valget gjelder hele dette timenotatet.</div></div><select onchange=\"setAssessmentScope(${l.id},this.value)\"><option value=\"lab\" ${l.assessmentScope==='lab'?'selected':''}>Lab / timeobservasjoner</option><option value=\"report\" ${l.assessmentScope==='report'?'selected':''}>Labrapport</option><option value=\"both\" ${l.assessmentScope==='both'?'selected':''}>Begge deler</option></select></div>`;activeLab.innerHTML=`<div class=\"toolbar\"><div class=\"toolbar-left\"><div><strong>${esc(l.name)}</strong><div class=\"muted\">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class=\"toolbar-right\"><span class=\"hint\">${l.students.length} elever</span></div></div>${scopeControl}`+renderElevMode(l);"
+          if old not in text:
+              raise RuntimeError('renderLab assignment not found')
+          text=text.replace(old,new,1)
           p.write_text(text,encoding='utf-8')
           PY
-
           if git diff --quiet -- index.html; then
             echo 'No changes to commit'
             exit 0
