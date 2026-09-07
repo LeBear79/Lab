@@ -1,0 +1,79 @@
+name: Build LabNotes v1.8
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-labnotes-v18.yml'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build v1.8 from last good v1.7.2
+        shell: bash
+        run: |
+          git show 288b7e19b34e80e47ff268508cf858c9a06bb9c1:index.html > index.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          s=s.replace('<title>LabNotes v1.7.2</title>','<title>LabNotes v1.8</title>')
+          s=s.replace('<div class="version">v1.7.2</div>','<div class="version">v1.8</div>')
+          s=s.replace("for(const key of ['labnotes_v1_7_2',", "for(const key of ['labnotes_v1_8','labnotes_v1_7_2',")
+          s=s.replace("localStorage.setItem('labnotes_v1_7_2',JSON.stringify(data))", "localStorage.setItem('labnotes_v1_8',JSON.stringify(data))")
+          s=s.replace("appVersion:'1.7.2'", "appVersion:'1.8'")
+          s=s.replace('let openReportStudentIndex=null;','let openStudentIndex=null;')
+          css='''\n/* v1.8 – elevkort for timeobservasjoner */\n.student-register-table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#fff}\n.student-register-table th,.student-register-table td{padding:8px 10px;border-bottom:1px solid #e5ece9;text-align:left;vertical-align:middle}\n.student-register-table th{background:#edf5f2;color:#3c514b;font-size:.74rem}\n.student-register-table tr:last-child td{border-bottom:0}\n.student-register-table .compact-status{width:120px}\n.student-register-table .compact-status select{padding:6px 23px 6px 7px;font-size:.72rem;border-radius:8px}\n.student-open-btn{border:0;background:transparent;padding:0;color:var(--text);font-weight:850;cursor:pointer;text-align:left}\n.student-open-btn:hover{color:var(--primary)}\n.student-register-row.is-open td{background:#f7fbf9}\n.student-detail-row td{padding:0;background:#fbfdfc}\n.student-detail{padding:13px 14px 15px;border-top:1px solid var(--border)}\n.student-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}\n.student-detail-section{border:1px solid var(--border);border-radius:12px;background:#fff;padding:12px}\n.observation-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0 10px}\n.observation-chip{border:1px solid #cbdad5;background:#fff;color:#40534e;border-radius:9px;padding:7px 9px;font-size:.75rem;font-weight:750;cursor:pointer;text-align:left}\n.observation-chip:hover{border-color:#8eb2a8;background:#f2f8f5}\n.observation-chip.active{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 3px 9px rgba(47,104,93,.14)}\n.detail-count{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted)}\n.detail-count b{color:var(--primary-dark)}\n.feedback-scope{display:grid;grid-template-columns:minmax(0,340px);margin:10px 0 4px}\n.feedback-scope select{padding:8px 10px}\n@media(max-width:760px){.student-detail-grid{grid-template-columns:1fr}.observation-options{grid-template-columns:1fr}.student-register-table th:nth-child(3),.student-register-table td:nth-child(3){display:none}.student-register-table .compact-status{width:95px}}\n'''
+          s=s.replace('</style>',css+'\n</style>',1)
+          def rf(src,name,new):
+              st=src.find('function '+name+'(')
+              if st<0: raise Exception('missing '+name)
+              b=src.find('{',st); d=0; q=None; esc=False; i=b
+              while i<len(src):
+                  ch=src[i]
+                  if q:
+                      if esc: esc=False
+                      elif ch=='\\\\': esc=True
+                      elif ch==q: q=None
+                  else:
+                      if ch in "'\\\"`": q=ch
+                      elif ch=='{': d+=1
+                      elif ch=='}':
+                          d-=1
+                          if d==0: return src[:st]+new+src[i+1:]
+                  i+=1
+              raise Exception('unbalanced '+name)
+          s=rf(s,'toggleReportRow',"""function toggleStudentRow(i){openStudentIndex=openStudentIndex===i?null:i;renderLab();}""")
+          s=rf(s,'toggleObservation',"""function toggleObservation(labId,studentIndex,criterion,checked){let l=data.labs.find(x=>x.id===labId);if(!l)return;let a=l.students[studentIndex].tags||(l.students[studentIndex].tags=[]),p=a.indexOf(criterion);if(checked&&p<0)a.push(criterion);if(!checked&&p>=0)a.splice(p,1);persist();renderStats();renderHistory();}\nfunction toggleObservationTag(labId,studentIndex,criterion){let l=data.labs.find(x=>x.id===labId);if(!l)return;let a=l.students[studentIndex].tags||(l.students[studentIndex].tags=[]),p=a.indexOf(criterion);p>=0?a.splice(p,1):a.push(criterion);persist();openStudentIndex=studentIndex;renderLab();renderStats();renderHistory();}""")
+          s=rf(s,'toggleReportTag',"""function toggleReportTag(labId,studentIndex,comment){let l=data.labs.find(x=>x.id===labId);if(!l)return;let a=l.students[studentIndex].reportTags||(l.students[studentIndex].reportTags=[]),p=a.indexOf(comment);p>=0?a.splice(p,1):a.push(comment);persist();openStudentIndex=studentIndex;renderLab();renderStats();renderHistory();}""")
+          render=r'''function renderElevMode(l){
+            let q=(document.getElementById('studentSearch')?.value||'').trim().toLowerCase();
+            let filtered=l.students.map((s,i)=>({s,i})).filter(({s})=>!q||String(s.name||'').toLowerCase().includes(q));
+            let meta=document.getElementById('studentSearchMeta');if(meta)meta.textContent=q?`${filtered.length} av ${l.students.length} elever`:`${l.students.length} elever`;
+            let rows=filtered.map(({s,i})=>{s.tags||=[];s.reportTags||=[];s.reportNote=s.reportNote||'';s.note=s.note||'';if(!s.status)s.status='Gjennomført';let o=openStudentIndex===i;
+              let oc=data.criteria.map(c=>`<button type="button" class="observation-chip ${s.tags.includes(c)?'active':''}" onclick="toggleObservationTag(${l.id},${i},'${jsq(c)}')">${esc(c)}</button>`).join('');
+              let rc=data.reportComments.map(c=>`<button type="button" class="report-chip ${s.reportTags.includes(c)?'active':''}" onclick="toggleReportTag(${l.id},${i},'${jsq(c)}')">${esc(c)}</button>`).join('');let rh=s.reportTags.length||s.reportNote;
+              return `<tr class="student-register-row ${o?'is-open':''}"><td><button class="student-open-btn" onclick="toggleStudentRow(${i})"><div class="student-name">${esc(s.name)}</div><div class="student-id">Elev ${s.id} · ${o?'Lukk':'Åpne'}</div></button></td><td class="compact-status"><select onchange="setStatus(${l.id},${i},this.value)"><option ${s.status==='Gjennomført'?'selected':''}>Gjennomført</option><option ${s.status==='Fravær'?'selected':''}>Fravær</option><option ${s.status==='Ikke gjennomført'?'selected':''}>Ikke gjennomført</option></select></td><td><span class="detail-count"><b>${s.tags.length}</b> observasjoner</span></td><td>${s.note?'Notat ✓':'–'}</td><td>${rh?'Labrapport ✓':'–'}</td></tr>${o?`<tr class="student-detail-row"><td colspan="5"><div class="student-detail"><div class="student-detail-grid"><section class="student-detail-section"><div class="report-heading"><strong>Timeobservasjoner</strong><span class="hint">Velg alle kriteriene som passer</span></div><div class="observation-options">${oc}</div><label>Eget notat</label><textarea oninput="note(${l.id},${i},this.value)" placeholder="Korte stikkord om eleven...">${esc(s.note)}</textarea></section><section class="student-detail-section"><div class="report-heading"><strong>Tilbakemelding på labrapport</strong><span class="hint">Velg alle kommentarene som passer</span></div><div class="report-options">${rc}</div><label>Egen kommentar</label><textarea oninput="reportNote(${l.id},${i},this.value)" placeholder="Kort individuell kommentar til labrapporten...">${esc(s.reportNote)}</textarea></section></div></div></td></tr>`:''}`;}).join('');
+            return `<div style="overflow:auto"><table class="student-register-table"><thead><tr><th>Elev</th><th>Status</th><th>Observasjoner</th><th>Notat</th><th>Labrapport</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+          }'''
+          s=rf(s,'renderElevMode',render)
+          s=rf(s,'renderLab',"""function renderLab(){let id=+labSelect.value,l=data.labs.find(x=>x.id===id);if(!l){activeLab.innerHTML='<div class=\"empty\">Velg et timenotat.</div>';return}activeLab.innerHTML=`<div class=\"toolbar\"><div class=\"toolbar-left\"><div><strong>${esc(l.name)}</strong><div class=\"muted\">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class=\"toolbar-right\"><span class=\"hint\">${l.students.length} elever</span></div></div>`+renderElevMode(l);}""")
+          old='<div class="ai-card"><div class="ai-head"><div><strong>Lag tekst til KI</strong><div class="hint">Appen bruker bare «Elev ${id}» og registrerte observasjoner. Elevnavnet blir ikke med.</div></div></div><div class="ai-actions">'
+          new='<div class="ai-card"><div class="ai-head"><div><strong>Lag tekst til KI</strong><div class="hint">Velg hva tilbakemeldingen skal bygge på. Elevnavnet blir ikke med.</div></div></div><div class="feedback-scope"><label>Grunnlag for tilbakemelding</label><select id="feedbackScope"><option value="lab">Lab / timeobservasjoner</option><option value="report">Labrapport</option><option value="both" selected>Begge deler</option></select></div><div class="ai-actions">'
+          s=s.replace(old,new,1)
+          s=rf(s,'buildAIPayload',"""function buildAIPayload(){let c=histClass.value,id=+histStudent.value;if(!c||!id)return null;let scope=document.getElementById('feedbackScope')?.value||'both',records=[];data.labs.filter(l=>l.cls===c).forEach(l=>{let r=(l.students||[]).find(s=>s.id===id);if(r)records.push({date:l.date,activity:l.name,status:r.status||'',observations:r.tags||[],teacherNote:r.note||'',reportComments:r.reportTags||[],reportNote:r.reportNote||''})});return {studentId:`Elev ${id}`,scope,records};}""")
+          prompt=r'''function makeAIPrompt(){let p=buildAIPayload(),status=document.getElementById('aiStatus'),box=document.getElementById('aiPrompt');if(!p||!p.records.length){status.textContent='Det finnes ingen registreringer å lage KI-tekst fra.';box.value='';return}let label=p.scope==='lab'?'lab og timeobservasjoner':p.scope==='report'?'labrapport':'lab/timeobservasjoner og labrapport';let rr=p.records.filter(r=>p.scope==='lab'?((r.observations||[]).length||r.teacherNote):p.scope==='report'?((r.reportComments||[]).length||r.reportNote):((r.observations||[]).length||r.teacherNote||(r.reportComments||[]).length||r.reportNote));if(!rr.length){status.textContent=`Det finnes ingen registrerte opplysninger for valgt grunnlag (${label}).`;box.value='';return}let lines=[`Jeg ønsker at du lager en kort, generell vurderingskommentar i naturfag for ${p.studentId}, basert på ${label}.`,'','Viktig:','- Bruk bare opplysningene som står nedenfor.','- Ikke finn på prestasjoner, egenskaper eller utvikling som ikke er registrert.','- Skriv på norsk bokmål og i du-form.','- Trekk fram både styrker og relevante utviklingsområder.','- Ikke nevn elevnummer, datoer, antall registreringer eller at teksten er laget av KI.','- Skriv ett sammenhengende avsnitt på omtrent 80–140 ord.','','Registrert grunnlag:'];rr.forEach((r,i)=>{lines.push('',`${i+1}. ${r.activity||'Lab'}${r.date?` (${r.date})`:''}`);if(p.scope!=='report'&&r.status)lines.push(`Status: ${r.status}`);if(p.scope!=='report'&&(r.observations||[]).length)lines.push(`Timeobservasjoner: ${r.observations.join(', ')}`);if(p.scope!=='report'&&r.teacherNote)lines.push(`Lærernotat: ${r.teacherNote}`);if(p.scope!=='lab'&&(r.reportComments||[]).length)lines.push(`Labrapport: ${r.reportComments.join(', ')}`);if(p.scope!=='lab'&&r.reportNote)lines.push(`Labrapportnotat: ${r.reportNote}`)});box.value=lines.join('\n');status.textContent='KI-teksten er klar. Kopier den og lim den inn i ChatGPT.';}'''
+          s=rf(s,'makeAIPrompt',prompt)
+          s=s.replace("if(selectedQuickCriterion===c)selectedQuickCriterion=data.criteria[0]||'';",'').replace("if(selectedQuickCriterion===old)selectedQuickCriterion=v;",'')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit v1.8
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "LabNotes v1.8: simplify observations and add feedback scope"
+          git push
