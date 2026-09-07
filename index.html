@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>LabNotes v1.8</title>
+<title>LabNotes v1.8.1</title>
 <style>
 
 :root{
@@ -605,6 +605,12 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
 .feedback-scope select{padding:8px 10px}
 @media(max-width:760px){.student-detail-grid{grid-template-columns:1fr}.observation-options{grid-template-columns:1fr}.student-register-table th:nth-child(3),.student-register-table td:nth-child(3){display:none}.student-register-table .compact-status{width:95px}}
 
+
+.assessment-scope-control{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-soft)}
+.assessment-scope-control label{margin:0;min-width:150px}
+.assessment-scope-control select{width:auto;min-width:230px;padding:7px 30px 7px 9px;font-size:.8rem}
+.student-detail-grid.single{grid-template-columns:1fr}
+@media(max-width:760px){.assessment-scope-control{align-items:stretch}.assessment-scope-control select{width:100%;min-width:0}}
 </style>
 </head>
 <body>
@@ -624,7 +630,7 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
         <div class="subtitle">Rask registrering av observasjoner og timenotater</div>
       </div>
     </div>
-    <div class="version">v1.8</div>
+    <div class="version">v1.8.1</div>
   </div>
 </header>
 <main>
@@ -750,7 +756,7 @@ const DEFAULT_REPORT_COMMENTS=[
 
 function loadData(){
   let d=null;
-  for(const key of ['labnotes_v1_8','labnotes_v1_7_2','labnotes_v1_7_1','labnotes_v1_7','naturfag_labb_v1_6_2','naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
+  for(const key of ['labnotes_v1_8_1','labnotes_v1_8','labnotes_v1_7_2','labnotes_v1_7_1','labnotes_v1_7','naturfag_labb_v1_6_2','naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
     if(d)break;
     try{d=JSON.parse(localStorage.getItem(key))}catch(e){}
   }
@@ -772,7 +778,7 @@ let openStudentIndex=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function jsq(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ')}
-function persist(){localStorage.setItem('labnotes_v1_8',JSON.stringify(data))}
+function persist(){localStorage.setItem('labnotes_v1_8_1',JSON.stringify(data))}
 function save(){persist();renderAll()}
 function classes(){return Object.keys(data.classes).sort((a,b)=>a.localeCompare(b,'nb'))}
 function fill(id,vals,ph='Velg...'){
@@ -808,7 +814,7 @@ function createLab(){
   let c=labClass.value,n=labName.value.trim(),d=labDate.value||new Date().toISOString().slice(0,10);
   if(!c||!n)return alert('Velg klasse og skriv inn navn på laben.');
   if(!(data.classes[c]||[]).length)return alert('Legg inn elevliste først.');
-  data.labs.unshift({id:Date.now(),cls:c,name:n,date:d,students:data.classes[c].map(s=>({id:s.id,name:s.name,status:'Gjennomført',tags:[],note:'',reportTags:[],reportNote:''}))});
+  data.labs.unshift({id:Date.now(),cls:c,name:n,date:d,assessmentScope:'lab',students:data.classes[c].map(s=>({id:s.id,name:s.name,status:'Gjennomført',tags:[],note:'',reportTags:[],reportNote:''}))});
   labName.value='';save();
   setTimeout(()=>{labSelect.value=String(data.labs[0].id);renderLab()},0);
 }
@@ -826,17 +832,19 @@ function reportNote(id,i,v){let l=data.labs.find(x=>x.id===id);if(!l)return;l.st
 
 
 
+function setAssessmentScope(labId,value){let l=data.labs.find(x=>x.id===labId);if(!l)return;l.assessmentScope=value||'lab';persist();renderLab();}
 function renderElevMode(l){
+  let scope=l.assessmentScope||'lab',showObs=scope==='lab'||scope==='both',showReport=scope==='report'||scope==='both';
   let q=(document.getElementById('studentSearch')?.value||'').trim().toLowerCase();
   let filtered=l.students.map((s,i)=>({s,i})).filter(({s})=>!q||String(s.name||'').toLowerCase().includes(q));
   let meta=document.getElementById('studentSearchMeta');if(meta)meta.textContent=q?`${filtered.length} av ${l.students.length} elever`:`${l.students.length} elever`;
   let rows=filtered.map(({s,i})=>{s.tags||=[];s.reportTags||=[];s.reportNote=s.reportNote||'';s.note=s.note||'';if(!s.status)s.status='Gjennomført';let o=openStudentIndex===i;
     let oc=data.criteria.map(c=>`<button type="button" class="observation-chip ${s.tags.includes(c)?'active':''}" onclick="toggleObservationTag(${l.id},${i},'${jsq(c)}')">${esc(c)}</button>`).join('');
     let rc=data.reportComments.map(c=>`<button type="button" class="report-chip ${s.reportTags.includes(c)?'active':''}" onclick="toggleReportTag(${l.id},${i},'${jsq(c)}')">${esc(c)}</button>`).join('');let rh=s.reportTags.length||s.reportNote;
-    return `<tr class="student-register-row ${o?'is-open':''}"><td><button class="student-open-btn" onclick="toggleStudentRow(${i})"><div class="student-name">${esc(s.name)}</div><div class="student-id">Elev ${s.id} · ${o?'Lukk':'Åpne'}</div></button></td><td class="compact-status"><select onchange="setStatus(${l.id},${i},this.value)"><option ${s.status==='Gjennomført'?'selected':''}>Gjennomført</option><option ${s.status==='Fravær'?'selected':''}>Fravær</option><option ${s.status==='Ikke gjennomført'?'selected':''}>Ikke gjennomført</option></select></td><td><span class="detail-count"><b>${s.tags.length}</b> observasjoner</span></td><td>${s.note?'Notat ✓':'–'}</td><td>${rh?'Labrapport ✓':'–'}</td></tr>${o?`<tr class="student-detail-row"><td colspan="5"><div class="student-detail"><div class="student-detail-grid"><section class="student-detail-section"><div class="report-heading"><strong>Timeobservasjoner</strong><span class="hint">Velg alle kriteriene som passer</span></div><div class="observation-options">${oc}</div><label>Eget notat</label><textarea oninput="note(${l.id},${i},this.value)" placeholder="Korte stikkord om eleven...">${esc(s.note)}</textarea></section><section class="student-detail-section"><div class="report-heading"><strong>Tilbakemelding på labrapport</strong><span class="hint">Velg alle kommentarene som passer</span></div><div class="report-options">${rc}</div><label>Egen kommentar</label><textarea oninput="reportNote(${l.id},${i},this.value)" placeholder="Kort individuell kommentar til labrapporten...">${esc(s.reportNote)}</textarea></section></div></div></td></tr>`:''}`;}).join('');
+    return `<tr class="student-register-row ${o?'is-open':''}"><td><button class="student-open-btn" onclick="toggleStudentRow(${i})"><div class="student-name">${esc(s.name)}</div><div class="student-id">Elev ${s.id} · ${o?'Lukk':'Åpne'}</div></button></td><td class="compact-status"><select onchange="setStatus(${l.id},${i},this.value)"><option ${s.status==='Gjennomført'?'selected':''}>Gjennomført</option><option ${s.status==='Fravær'?'selected':''}>Fravær</option><option ${s.status==='Ikke gjennomført'?'selected':''}>Ikke gjennomført</option></select></td><td><span class="detail-count"><b>${s.tags.length}</b> observasjoner</span></td><td>${s.note?'Notat ✓':'–'}</td><td>${rh?'Labrapport ✓':'–'}</td></tr>${o?`<tr class="student-detail-row"><td colspan="5"><div class="student-detail"><div class="student-detail-grid ${scope==='both'?'':'single'}"><section class="student-detail-section" ${showReport?'':'style="display:none"'}><div class="report-heading"><strong>Timeobservasjoner</strong><span class="hint">Velg alle kriteriene som passer</span></div><div class="observation-options">${oc}</div><label>Eget notat</label><textarea oninput="note(${l.id},${i},this.value)" placeholder="Korte stikkord om eleven...">${esc(s.note)}</textarea></section><section class="student-detail-section"><div class="report-heading"><strong>Tilbakemelding på labrapport</strong><span class="hint">Velg alle kommentarene som passer</span></div><div class="report-options">${rc}</div><label>Egen kommentar</label><textarea oninput="reportNote(${l.id},${i},this.value)" placeholder="Kort individuell kommentar til labrapporten...">${esc(s.reportNote)}</textarea></section></div></div></td></tr>`:''}`;}).join('');
   return `<div style="overflow:auto"><table class="student-register-table"><thead><tr><th>Elev</th><th>Status</th><th>Observasjoner</th><th>Notat</th><th>Labrapport</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
-function renderLab(){let id=+labSelect.value,l=data.labs.find(x=>x.id===id);if(!l){activeLab.innerHTML='<div class="empty">Velg et timenotat.</div>';return}activeLab.innerHTML=`<div class="toolbar"><div class="toolbar-left"><div><strong>${esc(l.name)}</strong><div class="muted">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class="toolbar-right"><span class="hint">${l.students.length} elever</span></div></div>`+renderElevMode(l);}
+function renderLab(){let id=+labSelect.value,l=data.labs.find(x=>x.id===id);if(!l){activeLab.innerHTML='<div class="empty">Velg et timenotat.</div>';return}if(!l.assessmentScope)l.assessmentScope='lab';let scopeControl=`<div class="assessment-scope-control"><div><label>Hva skal vurderes?</label><div class="hint">Valget gjelder hele dette timenotatet.</div></div><select onchange="setAssessmentScope(${l.id},this.value)"><option value="lab" ${l.assessmentScope==='lab'?'selected':''}>Lab / timeobservasjoner</option><option value="report" ${l.assessmentScope==='report'?'selected':''}>Labrapport</option><option value="both" ${l.assessmentScope==='both'?'selected':''}>Begge deler</option></select></div>`;activeLab.innerHTML=`<div class="toolbar"><div class="toolbar-left"><div><strong>${esc(l.name)}</strong><div class="muted">${esc(l.cls)} · ${esc(l.date)}</div></div></div><div class="toolbar-right"><span class="hint">${l.students.length} elever</span></div></div>${scopeControl}`+renderElevMode(l);}
 function toggleCriteria(){
   let e=document.getElementById('criteriaEditor');e.style.display=e.style.display==='none'?'block':'none';renderCriteria()
 }
