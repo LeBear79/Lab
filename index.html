@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>LabNotes v1.7.1</title>
+<title>LabNotes v1.7.2</title>
 <style>
 
 :root{
@@ -574,6 +574,12 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
   padding:12px;
 }
 
+
+/* v1.7.2 – sikkerhetskopi */
+.backup-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.backup-actions .primary,.backup-actions .ghost{margin-top:0}
+.backup-status{margin-top:9px;min-height:1.2em}
+
 </style>
 </head>
 <body>
@@ -593,7 +599,7 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
         <div class="subtitle">Rask registrering av observasjoner og timenotater</div>
       </div>
     </div>
-    <div class="version">v1.7.1</div>
+    <div class="version">v1.7.2</div>
   </div>
 </header>
 <main>
@@ -601,6 +607,20 @@ table.matrix{border-collapse:separate;border-spacing:0;width:max-content;min-wid
 
 <section id="oversikt" class="panel active">
   <div class="card"><h2>Oversikt</h2><div class="stats"><div class="stat"><span class="muted">Klasser</span><b id="sClasses">0</b></div><div class="stat"><span class="muted">Timenotater</span><b id="sLabs">0</b></div><div class="stat"><span class="muted">Observasjoner</span><b id="sObs">0</b></div></div><p class="hint">Data lagres lokalt i nettleseren. Elevnummer brukes som fast pseudonym-ID.</p></div>
+  <div class="card backup-card">
+    <div class="section-title">
+      <div>
+        <h2>Sikkerhetskopi</h2>
+        <div class="hint">Last ned alle klasser, elever, timenotater, observasjoner og lagrede kommentarer. Sikkerhetskopien kan lastes inn igjen senere.</div>
+      </div>
+    </div>
+    <div class="backup-actions">
+      <button class="primary" style="margin-top:0" onclick="downloadBackup()">Last ned sikkerhetskopi</button>
+      <button class="ghost" onclick="document.getElementById('backupFileInput').click()">Last inn sikkerhetskopi</button>
+      <input id="backupFileInput" type="file" accept="application/json,.json" style="display:none" onchange="restoreBackup(event)">
+    </div>
+    <div id="backupStatus" class="hint backup-status"></div>
+  </div>
   <div class="card"><h2>Siste timenotater</h2><div id="recent"></div></div>
 </section>
 
@@ -705,7 +725,7 @@ const DEFAULT_REPORT_COMMENTS=[
 
 function loadData(){
   let d=null;
-  for(const key of ['labnotes_v1_7_1','labnotes_v1_7','naturfag_labb_v1_6_2','naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
+  for(const key of ['labnotes_v1_7_2','labnotes_v1_7_1','labnotes_v1_7','naturfag_labb_v1_6_2','naturfag_labb_v1_6_1','naturfag_labb_v1_6','naturfag_labb_v1_5','naturfag_labb_v1_4','naturfag_labb_v1_3','naturfag_labb_v1_2','naturfag_labb_v1_1','naturfag_labb_v1']){
     if(d)break;
     try{d=JSON.parse(localStorage.getItem(key))}catch(e){}
   }
@@ -727,7 +747,7 @@ let openReportStudentIndex=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function jsq(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ')}
-function persist(){localStorage.setItem('labnotes_v1_7_1',JSON.stringify(data))}
+function persist(){localStorage.setItem('labnotes_v1_7_2',JSON.stringify(data))}
 function save(){persist();renderAll()}
 function classes(){return Object.keys(data.classes).sort((a,b)=>a.localeCompare(b,'nb'))}
 function fill(id,vals,ph='Velg...'){
@@ -1000,6 +1020,46 @@ function saveGeneralComment(){
   persist();
   let status=document.getElementById('aiStatus');if(status)status.textContent='Kommentaren er lagret lokalt.';
 }
+function backupTimestamp(){
+  const d=new Date(),pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
+}
+function setBackupStatus(msg){
+  const e=document.getElementById('backupStatus');if(e)e.textContent=msg||'';
+}
+function downloadBackup(){
+  try{
+    const payload={app:'LabNotes',backupVersion:1,appVersion:'1.7.2',createdAt:new Date().toISOString(),data:data};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=`LabNotes-sikkerhetskopi_${backupTimestamp()}.json`;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    setBackupStatus('Sikkerhetskopien er lastet ned. Oppbevar filen på et trygt sted.');
+  }catch(err){console.error(err);setBackupStatus('Kunne ikke lage sikkerhetskopien.');}
+}
+function validateBackupData(d){
+  return d && typeof d==='object' && d.classes && typeof d.classes==='object' && Array.isArray(d.labs);
+}
+async function restoreBackup(event){
+  const input=event.target,file=input.files&&input.files[0];
+  if(!file)return;
+  try{
+    const raw=await file.text();
+    const parsed=JSON.parse(raw);
+    const restored=parsed&&parsed.app==='LabNotes'&&parsed.data?parsed.data:parsed;
+    if(!validateBackupData(restored))throw new Error('Ugyldig sikkerhetskopi');
+    if(!confirm('Vil du erstatte dataene som ligger i LabNotes nå med denne sikkerhetskopien?')){input.value='';return}
+    localStorage.setItem('labnotes_before_restore',JSON.stringify({savedAt:new Date().toISOString(),data:data}));
+    data=restored;
+    persist();renderAll();
+    setBackupStatus(`Sikkerhetskopien «${file.name}» er lastet inn.`);
+  }catch(err){
+    console.error(err);
+    setBackupStatus('Filen kunne ikke lastes inn. Kontroller at dette er en sikkerhetskopi fra LabNotes.');
+  }finally{input.value=''}
+}
+
 function renderRecent(){recent.innerHTML=data.labs.length?data.labs.slice(0,8).map(l=>`<div class="listrow"><strong>${esc(l.cls)}</strong><span><strong>${esc(l.name)}</strong><br><span class="muted">${esc(l.date)}</span></span><span>${l.students.filter(s=>s.status==='Fravær').length} fravær</span></div>`).join(''):'<div class="empty">Ingen timenotater opprettet.</div>'}
 function renderStats(){sClasses.textContent=classes().length;sLabs.textContent=data.labs.length;sObs.textContent=data.labs.reduce((n,l)=>n+l.students.reduce((m,s)=>m+(s.tags||[]).length+(s.note?1:0)+(s.reportTags||[]).length+(s.reportNote?1:0),0),0)}
 function refresh(){let c=classes();['studentClass','labClass','histClass'].forEach(id=>fill(id,c,'Velg klasse'));updateHistStudents()}
