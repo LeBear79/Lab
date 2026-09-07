@@ -1,0 +1,91 @@
+name: Add LabNotes backup
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-labnotes-backup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add backup and restore to LabNotes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          text=p.read_text(encoding='utf-8')
+          text=text.replace('<title>LabNotes v1.7.1</title>','<title>LabNotes v1.7.2</title>')
+          text=text.replace('<div class="version">v1.7.1</div>','<div class="version">v1.7.2</div>')
+
+          needle='  <div class="card"><h2>Siste timenotater</h2><div id="recent"></div></div>'
+          backup='''  <div class="card backup-card">\n    <div class="section-title">\n      <div>\n        <h2>Sikkerhetskopi</h2>\n        <div class="hint">Last ned alle klasser, elever, timenotater, observasjoner og lagrede kommentarer. Sikkerhetskopien kan lastes inn igjen senere.</div>\n      </div>\n    </div>\n    <div class="backup-actions">\n      <button class="primary" style="margin-top:0" onclick="downloadBackup()">Last ned sikkerhetskopi</button>\n      <button class="ghost" onclick="document.getElementById('backupFileInput').click()">Last inn sikkerhetskopi</button>\n      <input id="backupFileInput" type="file" accept="application/json,.json" style="display:none" onchange="restoreBackup(event)">\n    </div>\n    <div id="backupStatus" class="hint backup-status"></div>\n  </div>\n  <div class="card"><h2>Siste timenotater</h2><div id="recent"></div></div>'''
+          if needle not in text:
+              raise SystemExit('Fant ikke oversiktskortet')
+          text=text.replace(needle,backup,1)
+
+          css='''\n/* v1.7.2 – sikkerhetskopi */\n.backup-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}\n.backup-actions .primary,.backup-actions .ghost{margin-top:0}\n.backup-status{margin-top:9px;min-height:1.2em}\n'''
+          text=text.replace('</style>',css+'\n</style>',1)
+
+          marker='function renderRecent(){'
+          idx=text.find(marker)
+          if idx<0: raise SystemExit('Fant ikke renderRecent')
+          js=r'''function backupTimestamp(){
+            const d=new Date(),pad=n=>String(n).padStart(2,'0');
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
+          }
+          function setBackupStatus(msg){
+            const e=document.getElementById('backupStatus');if(e)e.textContent=msg||'';
+          }
+          function downloadBackup(){
+            try{
+              const payload={app:'LabNotes',backupVersion:1,appVersion:'1.7.2',createdAt:new Date().toISOString(),data:data};
+              const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+              const url=URL.createObjectURL(blob),a=document.createElement('a');
+              a.href=url;a.download=`LabNotes-sikkerhetskopi_${backupTimestamp()}.json`;
+              document.body.appendChild(a);a.click();a.remove();
+              setTimeout(()=>URL.revokeObjectURL(url),1000);
+              setBackupStatus('Sikkerhetskopien er lastet ned. Oppbevar filen på et trygt sted.');
+            }catch(err){console.error(err);setBackupStatus('Kunne ikke lage sikkerhetskopien.');}
+          }
+          function validateBackupData(d){
+            return d && typeof d==='object' && d.classes && typeof d.classes==='object' && Array.isArray(d.labs);
+          }
+          async function restoreBackup(event){
+            const input=event.target,file=input.files&&input.files[0];
+            if(!file)return;
+            try{
+              const raw=await file.text();
+              const parsed=JSON.parse(raw);
+              const restored=parsed&&parsed.app==='LabNotes'&&parsed.data?parsed.data:parsed;
+              if(!validateBackupData(restored))throw new Error('Ugyldig sikkerhetskopi');
+              if(!confirm('Vil du erstatte dataene som ligger i LabNotes nå med denne sikkerhetskopien?')){input.value='';return}
+              localStorage.setItem('labnotes_before_restore',JSON.stringify({savedAt:new Date().toISOString(),data:data}));
+              data=restored;
+              persist();renderAll();
+              setBackupStatus(`Sikkerhetskopien «${file.name}» er lastet inn.`);
+            }catch(err){
+              console.error(err);
+              setBackupStatus('Filen kunne ikke lastes inn. Kontroller at dette er en sikkerhetskopi fra LabNotes.');
+            }finally{input.value=''}
+          }
+
+          '''
+          text=text[:idx]+js+text[idx:]
+          text=text.replace("for(const key of ['labnotes_v1_7_1','labnotes_v1_7',", "for(const key of ['labnotes_v1_7_2','labnotes_v1_7_1','labnotes_v1_7',")
+          text=text.replace("localStorage.setItem('labnotes_v1_7_1',JSON.stringify(data))", "localStorage.setItem('labnotes_v1_7_2',JSON.stringify(data))")
+          p.write_text(text,encoding='utf-8')
+          PY
+      - name: Commit update
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add LabNotes backup and restore"
+          git push
